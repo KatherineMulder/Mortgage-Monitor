@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Mortgage</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style_add_mortgage.css') }}">
+</head>
+<body>
+
+    <header class="container">
+        <h1 class="mt-4 mb-4">Update Mortgage</h1>
+    </header>
+
+    <main class="container main_mortgage">
+        <section class="container_mortgage">
+            <div class="input-container">
+                <div class="row mb-3">
+                    <div class="col">
+                        <label for="Mortgage">Select Mortgage:</label>
+                        <select id="Mortgage" class="form-control" required>
+                            <option selected disabled>Select Mortgage Name</option>
+                            <option value="Mortgage1">Mortgage 1</option>
+                            <option value="Mortgage2">Mortgage 2</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col">
+                        <label for="date">Date:</label>
+                        <input type="date" id="date" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col">
+                        <label for="principal">Principal ($):</label>
+                        <input type="number" id="principal" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col">
+                        <label for="interest">Interest (%):</label>
+                        <input type="number" id="interest" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col">
+                        <label for="term_years">Term (Years):</label>
+                        <input type="number" id="term_years" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col">
+                        <label for="payment_override">Payment Override yearly($):</label>
+                        <input type="number" id="payment_override" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col">
+                        <label for="additionalCosts">Additional Costs ($):</label>
+                        <input type="number" id="additionalCosts" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col">
+                        <label for="commonField">Comment:</label>
+                        <textarea id="commonField" class="form-control" rows="4" cols="50" required></textarea>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col">
+                        <button onclick="calculate()" class="btn btn-primary">Update Mortgage</button>
+                        <button onclick="saveChange()" class="btn btn-primary">Save Change</button>
+                        <button onclick="cancel_update()" class="btn btn-secondary">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+</body>
+</html>

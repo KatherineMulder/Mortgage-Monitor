@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log in</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+
+<div class="container">
+    <div class="center">
+        <h1>Login</h1>
+        <form action="/login" method="POST">
+            <div class="txt_field">
+                <i class="fas fa-user input-icon"></i>
+                <input type="text" name="username" required>
+                <span></span>
+                <label>Username</label>
+            </div>
+            <div class="txt_field">
+                <i class="fas fa-lock input-icon"></i>
+                <input type="password" name="password" required>
+                <span></span>
+                <label>Password</label>
+            </div>
+
+            <input name="submit" type="Submit" value="Login">
+            <div class="signup_link">
+                Not a Member ? <a href="{{ url_for('signup') }}">Sign up</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+</body>
+</html>
