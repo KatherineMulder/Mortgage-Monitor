@@ -217,7 +217,6 @@ def remove_mortgage():
     return render_template("remove_mortgage.html")
 
 
-
 @app.route("/logout")
 def logout():
     session.pop('username', None)

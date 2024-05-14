@@ -1,15 +1,16 @@
 from decimal import Decimal
 
+
 class Mortgage:
-    def __init__(self, mortgage_id, mortgage_name, initial_interest, initial_term, initial_principal,
-                 deposit=0, extra_costs=0):
-        self._mortgage_id = mortgage_id
-        self._mortgage_name = mortgage_name
-        self._initial_interest = initial_interest
-        self._initial_term = initial_term
-        self._initial_principal = initial_principal
-        self._deposit = deposit
-        self._extra_costs = extra_costs
+    def __init__(self, mortgage_id, mortgage_name, initial_interest, initial_term,
+                 initial_principal,deposit, extra_costs):
+        self.mortgage_id = mortgage_id
+        self.mortgage_name = mortgage_name
+        self.initial_interest = initial_interest
+        self.initial_term = initial_term
+        self.initial_principal = initial_principal
+        self.deposit = deposit
+        self.extra_costs = extra_costs
 
     @property
     def mortgage_id(self):
@@ -17,7 +18,7 @@ class Mortgage:
 
     @mortgage_id.setter
     def mortgage_id(self, mortgage_id):
-        if not mortgage_id:
+        if mortgage_id is None:
             raise ValueError("Mortgage ID is required")
         self._mortgage_id = mortgage_id
 
@@ -37,8 +38,10 @@ class Mortgage:
 
     @initial_interest.setter
     def initial_interest(self, initial_interest):
-        if not initial_interest:
+        if initial_interest is None:
             raise ValueError("Initial interest is required")
+        if initial_interest < 0:
+            raise ValueError("Initial interest cannot be negative")
         self._initial_interest = initial_interest
 
     @property
@@ -47,8 +50,10 @@ class Mortgage:
 
     @initial_term.setter
     def initial_term(self, initial_term):
-        if not initial_term:
+        if initial_term is None:
             raise ValueError("Initial term is required")
+        if initial_term < 0:
+            raise ValueError("Initial term cannot be negative")
         self._initial_term = initial_term
 
     @property
@@ -57,8 +62,10 @@ class Mortgage:
 
     @initial_principal.setter
     def initial_principal(self, initial_principal):
-        if not initial_principal:
+        if initial_principal is None:
             raise ValueError("Initial principal is required")
+        if initial_principal < 0:
+            raise ValueError("Initial principal cannot be negative")
         self._initial_principal = initial_principal
 
     @property
@@ -67,6 +74,10 @@ class Mortgage:
 
     @deposit.setter
     def deposit(self, deposit):
+        if deposit is None:
+            raise ValueError("Deposit is required")
+        if deposit < 0:
+            raise ValueError("Deposit cannot be negative")
         self._deposit = deposit
 
     @property
@@ -75,6 +86,10 @@ class Mortgage:
 
     @extra_costs.setter
     def extra_costs(self, extra_costs):
+        if extra_costs is None:
+            raise ValueError("Extra costs are required")
+        if extra_costs < 0:
+            raise ValueError("Extra costs cannot be negative")
         self._extra_costs = extra_costs
 
     def total_loan_amount(self):
@@ -142,6 +157,33 @@ class Mortgage:
             remaining_principal -= fortnightly_principal_repayment
         return remaining_principal
 
+    def calculate_remaining_balance_monthly(self, months_paid):
+        monthly_interest_rate = self.initial_interest / 12 / 100
+        total_payments = self.initial_term * 12
+        monthly_payment = (self.initial_principal * monthly_interest_rate) / (
+                    1 - (1 + monthly_interest_rate) ** -total_payments)  # Calculate monthly payment
+        total_paid = monthly_payment * months_paid
+        remaining_balance = self.initial_principal - total_paid
+        return round(remaining_balance,2)
+
+    def calculate_remaining_balance_fortnightly(self, fortnights_paid):
+        fortnightly_interest_rate = self.initial_interest / 26 / 100
+        total_payments = self.initial_term * 26
+        fortnightly_payment = (self.initial_principal * fortnightly_interest_rate) / (
+                1 - (1 + fortnightly_interest_rate) ** -total_payments)
+        total_paid = fortnightly_payment * fortnights_paid
+        remaining_balance = self.initial_principal - total_paid
+        return round(remaining_balance, 2)
+
+    def update_mortgage(self, new_loan_amount, new_interest_rate, new_loan_term, new_extra_cost=0, new_adjustment_description=None):
+        self.initial_principal = new_loan_amount
+        self.initial_interest = new_interest_rate
+        self.initial_term = new_loan_term
+        self.extra_costs = new_extra_cost
+        # Update adjustment description if provided
+        if new_adjustment_description is not None:
+            self.mortgage_name = new_adjustment_description
+
     def __str__(self):
         return "\n".join([
             f"Mortgage ID: {self.mortgage_id}",
@@ -159,18 +201,30 @@ if __name__ == "__main__":
     mortgage = Mortgage(
         mortgage_id=1,
         mortgage_name="test Mortgage",
-        initial_interest=5.0,
+        initial_interest=5,
         initial_term=30,
         initial_principal=300000,
         deposit=5000,
         extra_costs=1000
     )
+    print("Actual String Representation:")
+    print(str(mortgage))
+    print("\nExpected String Representation:")
+    expected_string = (
+        "Mortgage ID: 1\n"
+        "Mortgage Name: test Mortgage\n"
+        "Initial Interest: 5\n"
+        "Initial Term: 30\n"
+        "Initial Principal: 300000\n"
+        "Deposit: 5000\n"
+        "Extra Costs: 1000"
+    )
 
     print(mortgage)
+
     assert (
             str(mortgage)
-            == "Mortgage ID: 1\nMortgage Name: test Mortgage\nInitial Interest: "
-               "5.0\nInitial Term: 30\nInitial Principal: 300000\nDeposit: 5000\nExtra Costs: 1000"
+            == expected_string
     ), "__str__ not the same"
 
     mortgage.mortgage_name = "New Mortgage"
@@ -189,4 +243,18 @@ if __name__ == "__main__":
     print("Fortnightly Interest:", mortgage.calculate_fortnightly_interest())
     print("Fortnightly Repayment:", mortgage.calculate_fortnightly_repayment())
     print("Fortnightly Principal Repayment:", mortgage.calculate_fortnightly_principal_repayment())
+
+
+    # remaining_balance function
+    months_paid = 12
+    remaining_balance = mortgage.calculate_remaining_balance_monthly(months_paid)
+    print(f"Remaining balance after {months_paid} months: {remaining_balance}")
+
+    fortnights_paid = 24
+    remaining_balance_fortnightly = mortgage.calculate_remaining_balance_fortnightly(fortnights_paid)
+    print(f"Remaining balance after {fortnights_paid} fortnights: {remaining_balance_fortnightly}")
+
     print("End Tests")
+
+
+

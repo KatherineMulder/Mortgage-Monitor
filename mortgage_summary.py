@@ -1,11 +1,15 @@
+from decimal import Decimal
+from mortgage import Mortgage
+
+
 class MortgageSummary:
-    def __init__(self, loan_amount, interest_rate, loan_term, monthly_payment, total_interest_paid, remaining_balance):
+    def __init__(self, loan_amount, interest_rate, loan_term):
         self._loan_amount = loan_amount
         self._interest_rate = interest_rate
         self._loan_term = loan_term
-        self._monthly_payment = monthly_payment
-        self._total_interest_paid = total_interest_paid
-        self._remaining_balance = remaining_balance
+        self._monthly_payment = None
+        self._total_interest_paid = None
+        self._remaining_balance = None
 
     @property
     def loan_amount(self):
@@ -57,33 +61,44 @@ class MortgageSummary:
 
     def update_summary(self, mortgage):
         """
-        update the summary based on any changes made to the mortgage.
+        Update the summary based on any changes made to the mortgage.
         """
-        self._total_interest_paid = mortgage.calculate_total_interest()
-        self._remaining_balance = mortgage.calculate_remaining_balance()
-
-    @staticmethod
-    def calculate_total_interest(self, mortgage):
-        """
-        calculate the total interest paid over the life of the loan.
-        """
-        return mortgage.calculate_total_interest()
-
-    @staticmethod
-    def calculate_remaining_balance(self, mortgage):
-        """
-        calculate the remaining balance of the loan after a certain period.
-        """
-        return mortgage.calculate_remaining_balance()
+        self._total_interest_paid = mortgage.calculate_monthly_interest()
+        self._remaining_balance = mortgage.calculate_remaining_balance_monthly()
 
     def generate_summary(self, mortgage):
         """
-        generate a summary of the mortgage analysis based on the current mortgage information.
-        need to expend more?
+        Generate a summary of the mortgage analysis based on the current mortgage information.
         """
         self._monthly_payment = mortgage.calculate_monthly_payment()
 
-# TODO could validate that the loan amount, interest rate, and loan term are within acceptable ranges.
-# TODO error handling
-# TODO Amortization Schedule
-# TODO Visualization
+
+if __name__ == "__main__":
+    print("Start Tests")
+
+    # Initial mortgage object
+    initial_loan_amount = Decimal('100000')
+    initial_interest_rate = Decimal('4.5')
+    initial_loan_term = 30
+    existing_mortgage = Mortgage(mortgage_id=1, mortgage_name="Initial Mortgage",
+                                 initial_interest=initial_interest_rate,
+                                 initial_term=initial_loan_term, initial_principal=initial_loan_amount)
+
+
+    summary = MortgageSummary(loan_amount=initial_loan_amount, interest_rate=initial_interest_rate,
+                              loan_term=initial_loan_term)
+
+
+    summary.update_summary(existing_mortgage)
+
+    print("Mortgage Summary:")
+    print(f"Loan Amount: {summary.loan_amount}")
+    print(f"Interest Rate: {summary.interest_rate}")
+    print(f"Loan Term: {summary.loan_term}")
+    print(f"Monthly Payment: {summary.monthly_payment}")
+    print(f"Total Interest Paid: {summary.total_interest_paid}")
+    print(f"Remaining Balance: {summary.remaining_balance}")
+    print("End Tests")
+
+
+# TODO reminding monthly and fornightly needs update

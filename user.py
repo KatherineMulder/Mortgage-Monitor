@@ -130,3 +130,5 @@ class User:
 
 
 User.create_user_table()
+
+# TODO error checking add more validation
