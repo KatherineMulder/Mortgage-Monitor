@@ -3,7 +3,8 @@ from decimal import Decimal
 
 class Mortgage:
     def __init__(self, mortgage_id, mortgage_name, initial_interest, initial_term,
-                 initial_principal,deposit, extra_costs):
+                 initial_principal,deposit=0 , extra_costs=0):
+
         self.mortgage_id = mortgage_id
         self.mortgage_name = mortgage_name
         self.initial_interest = initial_interest
@@ -17,10 +18,12 @@ class Mortgage:
         return self._mortgage_id
 
     @mortgage_id.setter
-    def mortgage_id(self, mortgage_id):
-        if mortgage_id is None:
-            raise ValueError("Mortgage ID is required")
-        self._mortgage_id = mortgage_id
+    def mortgage_id(self, value):
+        if not value:
+            raise ValueError("mortgage ID cannot be empty")
+        if not isinstance(value, int) or value <= 0:
+            raise ValueError("mortgage ID must be a positive integer")
+        self._mortgage_id = value
 
     @property
     def mortgage_name(self):
@@ -29,7 +32,7 @@ class Mortgage:
     @mortgage_name.setter
     def mortgage_name(self, mortgage_name):
         if not mortgage_name:
-            raise ValueError("Mortgage name is required")
+            raise ValueError("mortgage name is required")
         self._mortgage_name = mortgage_name
 
     @property
@@ -158,15 +161,22 @@ class Mortgage:
         return remaining_principal
 
     def calculate_remaining_balance_monthly(self, months_paid):
+        """
+        calculates the remaining balance specifically for monthly payments.
+        t doesn't update any existing balance, it's a standalone calculation
+        """
         monthly_interest_rate = self.initial_interest / 12 / 100
         total_payments = self.initial_term * 12
         monthly_payment = (self.initial_principal * monthly_interest_rate) / (
-                    1 - (1 + monthly_interest_rate) ** -total_payments)  # Calculate monthly payment
+                1 - (1 + monthly_interest_rate) ** -total_payments)  # Calculate monthly payment
         total_paid = monthly_payment * months_paid
         remaining_balance = self.initial_principal - total_paid
-        return round(remaining_balance,2)
+        return round(remaining_balance, 2)
 
     def calculate_remaining_balance_fortnightly(self, fortnights_paid):
+        """
+        it doesn't update any existing balance, it's a standalone calculation
+        """
         fortnightly_interest_rate = self.initial_interest / 26 / 100
         total_payments = self.initial_term * 26
         fortnightly_payment = (self.initial_principal * fortnightly_interest_rate) / (
@@ -174,6 +184,37 @@ class Mortgage:
         total_paid = fortnightly_payment * fortnights_paid
         remaining_balance = self.initial_principal - total_paid
         return round(remaining_balance, 2)
+
+    def calculate_remaining_balance(self, payments_paid):
+
+        """
+        for update the remaining balance based on the number of payments already made
+        and calculates the remaining balance for both monthly and fortnightly payment frequencies
+
+        """
+        monthly_interest_rate = self.initial_interest / 12 / 100
+        total_payments = self.initial_term * 12
+        remaining_payments = total_payments - payments_paid
+        monthly_payment = (self.initial_principal * monthly_interest_rate) / (
+                1 - (1 + monthly_interest_rate) ** -remaining_payments)
+
+        fortnightly_interest_rate = self.initial_interest / 26 / 100
+        total_payments_fortnightly = self.initial_term * 26
+        remaining_payments_fortnightly = total_payments_fortnightly - payments_paid
+        fortnightly_payment = (self.initial_principal * fortnightly_interest_rate) / (
+                1 - (1 + fortnightly_interest_rate) ** -remaining_payments_fortnightly)
+
+        total_paid_monthly = monthly_payment * payments_paid
+        remaining_balance_monthly = self.initial_principal - total_paid_monthly
+
+        total_paid_fortnightly = fortnightly_payment * payments_paid
+        remaining_balance_fortnightly = self.initial_principal - total_paid_fortnightly
+
+        return {
+            'monthly': round(remaining_balance_monthly, 2),
+            'fortnightly': round(remaining_balance_fortnightly, 2)
+        }
+
 
     def update_mortgage(self, new_loan_amount, new_interest_rate, new_loan_term, new_extra_cost=0, new_adjustment_description=None):
         self.initial_principal = new_loan_amount
@@ -244,10 +285,9 @@ if __name__ == "__main__":
     print("Fortnightly Repayment:", mortgage.calculate_fortnightly_repayment())
     print("Fortnightly Principal Repayment:", mortgage.calculate_fortnightly_principal_repayment())
 
-
     # remaining_balance function
     months_paid = 12
-    remaining_balance = mortgage.calculate_remaining_balance_monthly(months_paid)
+    remaining_balance = mortgage.calculate_remaining_balance(months_paid)
     print(f"Remaining balance after {months_paid} months: {remaining_balance}")
 
     fortnights_paid = 24
@@ -255,6 +295,3 @@ if __name__ == "__main__":
     print(f"Remaining balance after {fortnights_paid} fortnights: {remaining_balance_fortnightly}")
 
     print("End Tests")
-
-
-

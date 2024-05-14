@@ -52,18 +52,25 @@ class Transaction:
     @adjustment_description.setter
     def adjustment_description(self, value):
         self._adjustment_description = value
-
-    def update_mortgage(self, new_principal, new_interest_rate, new_loan_term, new_extra_cost=0,
-                        new_adjustment_description=None):
-        self.mortgage.update_mortgage(new_principal, new_interest_rate, new_loan_term, new_extra_cost,
-                                      new_adjustment_description)
-
-    def apply_transaction(self, mortgage):
-        mortgage.loan_amount = self._new_loan_amount
-        mortgage.interest_rate = self._new_interest_rate
-        mortgage.loan_term = self._new_loan_term
-        mortgage.extra_costs = self._new_extra_cost
-        mortgage.adjustment_description = self._adjustment_description
+    # TODO
+    # def update_mortgage(self, new_principal, new_interest_rate, new_loan_term, new_extra_cost=0,
+    #                     new_adjustment_description=None):
+    #     if self.mortgage:
+    #         self.mortgage.update_mortgage(new_principal, new_interest_rate, new_loan_term, new_extra_cost,
+    #                                        new_adjustment_description)
+    #
+    # def apply_transaction(self):
+    #     if self.mortgage:
+    #         self.mortgage.loan_amount = self._new_loan_amount
+    #         self.mortgage.interest_rate = self._new_interest_rate
+    #         self.mortgage.loan_term = self._new_loan_term
+    #         self.mortgage.extra_costs = self._new_extra_cost
+    #         self.mortgage.adjustment_description = self._adjustment_description
+    #         remaining_principal_monthly = self.mortgage.calculate_remaining_balance_monthly(
+    #             months_paid=24)
+    #         remaining_principal_fortnightly = self.mortgage.calculate_remaining_balance_fortnightly(
+    #             fortnights_paid=104)
+    #         return remaining_principal_monthly, remaining_principal_fortnightly
 
     def __str__(self):
         return (f"Transaction Date: {self._transaction_date}, "
@@ -95,7 +102,6 @@ if __name__ == "__main__":
                               new_interest_rate, new_extra_cost, new_loan_term,
                               adjustment_description)
 
-    # assign the mortgage object to the transaction
     transaction.mortgage = existing_mortgage
 
     print("Before Transaction:")
