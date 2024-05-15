@@ -48,7 +48,21 @@ def create_database():
         )
     """)
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS transactions (
+            transaction_id SERIAL PRIMARY KEY,
+            transaction_date DATE NOT NULL,
+            new_principal NUMERIC NOT NULL,
+            new_interest_rate NUMERIC NOT NULL,
+            new_extra_cost NUMERIC NOT NULL,
+            new_loan_term INTEGER NOT NULL,
+            adjustment_description VARCHAR(255),
+            mortgage_id INTEGER REFERENCES mortgages(mortgage_id)
+        )
+    """)
+
     conn.commit()
     conn.close()
+
 
 create_database()

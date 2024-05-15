@@ -9,165 +9,175 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
-<body class="bg-white">
-<nav class="navbar navbar-light bg-light">
-    <div class="navbar-brand">
-        <img src="/static/homeloan.png" width="30" height="30" class="d-inline-block align-top">
-        <h3 style="display: inline; margin-left: 5px; margin-bottom: 0;">Mortgage Monitor</h3>
-    </div>
-    <div class="container">
-    <div class="container">
-    <div class="row">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-6 offset-md-3 d-flex justify-content-between align-items-center">
-                    <h3 class="text-muted">Hello &#128512;, <span class="text-primary">{{ username }}</span>!</h3>
-                     <button class="btn btn-danger ml-3" onclick="logout()">Logout</button>
+    <body class="bg-white">
+        <nav class="navbar navbar-light bg-light">
+                <div class="navbar-brand">
+                    <img src="/static/homeloan.png" width="30" height="30" class="d-inline-block align-top">
+                    <h3 style="display: inline; margin-left: 5px; margin-bottom: 0;">Mortgage Monitor</h3>
                 </div>
-            </div>
-        </div>
-
-
-
-</nav>
-<div class="dropdown">
-    <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-        Displaying Mortgage
-    </button>
-    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-        {% for mortgage_detail in mortgage_details[1:] %}
-            <a class="dropdown-item" href="#" data-id="{{ mortgage_detail[0] }}">Mortgage Name:  {{ mortgage_detail[1] }}</a>
-        {% endfor %}
-    </div>
-    <a href="{{ url_for('new_mortgage') }}" class="btn btn-secondary">Add New Mortgage</a>
-</div>
-
-    <div class="container">
-    {% for mortgage_detail in mortgage_details %}
-        <div class="row">
-            <div class="col-sm">
-                <div class="card result-container p-4 border bg-light">
-                    <div class="card-body">
-                        <a href="{{ url_for('update_mortgage') }}" class="btn btn-secondary"  style="float: right;" >Update Mortgage</a>
-                        <a href="{{ url_for('remove_mortgage') }}" class="btn btn-secondary"  style="float: right;">Remove Mortgage</a>
-                        <h2 class="card-title text-dark">Summary Overview</h2>
-                        <div class="Summary Overview">
-                            <p class="card-text text-dark">Mortgage Number: {{ mortgage_detail[0] }}</p>
-                            <p class="card-text text-dark">Mortgage Name: {{ mortgage_detail[1] }}</p>
-                            <p class="card-text text-dark">Total principal amount: {{ mortgage_detail[2] }}</p>
-                            <p class="card-text text-dark">Interest Rate: {{ mortgage_detail[3] }}</p>
-                            <p class="card-text text-dark">Loan term (years): {{ mortgage_detail[4] }}</p>
-                            <p class="card-text text-dark">Deposit: {{ mortgage_detail[5] }}</p>
-                            <p class="card-text text-dark">Extra Costs: {{ mortgage_detail[6] }}</p>
+            <div class="container">
+                <div class="container">
+                    <div class="row">
+                        <div class="container">
+                            <div class="row">
+                                <div class="col-md-6 offset-md-3 d-flex justify-content-between align-items-center">
+                                    <h3 class="text-muted">Hello &#128512;, <span class="text-primary">{{ username }}</span>!</h3>
+                                     <button class="btn btn-danger ml-3" onclick="logout()">Logout</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-sm">
-                <div class="card result-container p-4 border bg-light">
-                    <div class="card-body">
-                        <h2 class="card-title text-dark">Payment Breakdown</h2>
-                        <div class="Summary Overview">
-                            <p class="card-text text-dark">Monthly Estimated Repayment: {{ mortgage_detail[8] }}</p>
-                            <p class="card-text text-dark">Fortnightly Estimated Repayment: {{ mortgage_detail[11] }}</p>
-                            <p class="card-text text-dark">Monthly Interest: {{mortgage_detail[7] }}</p>
-                            <p class="card-text text-dark">Fortnightly Interest: {{ mortgage_detail[10] }}</p>
-                            <p class="card-text text-dark">Monthly Principal Repayment: {{ mortgage_detail[9] }}</p>
-                            <p class="card-text text-dark">Fortnightly Principal Repayment: {{ mortgage_detail[12] }}</p>
+        </nav>
+            <div class="dropdown">
+                <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Displaying Mortgage
+                </button>
+                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                    {% for mortgage_detail in mortgage_details[1:] %}
+                        <a class="dropdown-item" href="#" data-id="{{ mortgage_detail[0] }}">Mortgage Name:  {{ mortgage_detail[1] }}</a>
+                    {% endfor %}
+                </div>
+                <a href="{{ url_for('new_mortgage') }}" class="btn btn-secondary">Add New Mortgage</a>
+            </div>
+
+            <div class="container">
+            {% for mortgage_detail in mortgage_details %}
+                <div class="row">
+                    <div class="col-sm">
+                        <div class="card result-container p-4 border bg-light">
+                            <div class="card-body">
+                                <a href="{{ url_for('update_mortgage') }}" class="btn btn-secondary"  style="float: right;" >Update Mortgage</a>
+                                <a href="{{ url_for('remove_mortgage') }}" class="btn btn-secondary"  style="float: right;">Remove Mortgage</a>
+                                <h2 class="card-title text-dark">Summary Overview</h2>
+                                <div class="Summary Overview">
+                                    <p class="card-text text-dark">Mortgage Number: {{ mortgage_detail[0] }}</p>
+                                    <p class="card-text text-dark">Mortgage Name: {{ mortgage_detail[1] }}</p>
+                                    <p class="card-text text-dark">Total principal amount: {{ mortgage_detail[2] }}</p>
+                                    <p class="card-text text-dark">Interest Rate: {{ mortgage_detail[3] }}</p>
+                                    <p class="card-text text-dark">Loan term (years): {{ mortgage_detail[4] }}</p>
+                                    <p class="card-text text-dark">Deposit: {{ mortgage_detail[5] }}</p>
+                                    <p class="card-text text-dark">Extra Costs: {{ mortgage_detail[6] }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm">
+                        <div class="card result-container p-4 border bg-light">
+                            <div class="card-body">
+                                <h2 class="card-title text-dark">Payment Breakdown</h2>
+                                <div class="Summary Overview">
+                                    <p class="card-text text-dark">Monthly Estimated Repayment: {{ mortgage_detail[8] }}</p>
+                                    <p class="card-text text-dark">Fortnightly Estimated Repayment: {{ mortgage_detail[11] }}</p>
+                                    <p class="card-text text-dark">Monthly Interest: {{mortgage_detail[7] }}</p>
+                                    <p class="card-text text-dark">Fortnightly Interest: {{ mortgage_detail[10] }}</p>
+                                    <p class="card-text text-dark">Monthly Principal Repayment: {{ mortgage_detail[9] }}</p>
+                                    <p class="card-text text-dark">Fortnightly Principal Repayment: {{ mortgage_detail[12] }}</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
+                {% endfor %}
             </div>
-        </div>
-    {% endfor %}
-</div>
-
-
                  <div id="chart"></div>
                     {% if error_message %}
                     <p>{{ error_message }}</p>
                     {% endif %}
 
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <div>
+                        <h2>Amortization Table</h2>
+                         <button class="btn btn-secondary" onclick="toggleDisplay('fortnightly')">Display Fortnightly</button>
+                            <button class="btn btn-secondary" onclick="toggleDisplay('monthly')">Display Monthly</button>
+                        <table class="table">
+                            <thead>
+                            <tr>
+                              <th scope="col">Full Term Payments (Fortnightly)</th>
+                              <th scope="col">Reduced Term Payments (Fortnightly)</th>
+                              <th scope="col">Full Term Amortization (Fortnightly)</th>
+                              <th scope="col">Reduced Term Amortization (Fortnightly)</th>
+                              <th scope="col">Interest Over Full Term (Fortnightly)</th>
+                              <th scope="col">Principal Plus Interest (Fortnightly)</th>
+
+                              <th scope="col">Full Term Payments (Monthly)</th>
+                              <th scope="col">Reduced Term Payments (Monthly)</th>
+                              <th scope="col">Full Term Amortization (Monthly)</th>
+                              <th scope="col">Reduced Term Amortization (Monthly)</th>
+                              <th scope="col">Interest Over Full Term (Monthly)</th>
+                              <th scope="col">Principal Plus Interest (Monthly)</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                             {% for maturity_info in mortgage_maturity_info %}
+                                <tr>
+                                  <td>{{ maturity_info['full_term_payments'] }}</td>
+                                  <td>{{ maturity_info['reduced_term_payments'] }}</td>
+                                  <td>{{ maturity_info['full_term_amortization'] }}</td>
+                                  <td>{{ maturity_info['reduced_term_amortization'] }}</td>
+                                  <td>{{ maturity_info['interest_over_full_term'] }}</td>
+                                  <td>{{ maturity_info['principal_plus_interest'] }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-        </div>
 
+            <script>
+                $(document).ready(function() {
+                    $('.dropdown-item').click(function(e) {
+                        e.preventDefault();
+                        var mortgageId = $(this).data('id');
+                        updateMortgageDetails(mortgageId);
+                    });
 
+                    function updateMortgageDetails(mortgageId) {
+                        $.ajax({
+                            url: '/get_mortgage_details/' + mortgageId,
+                            method: 'GET',
+                            success: function(response) {
+                                $('#mortgage-number').text(response.number);
+                                $('#mortgage-name').text(response.name);
+                            },
+                            error: function(xhr, status, error) {
+                                console.error('Error fetching mortgage details:', error);
+                            }
+                        });
+                    }
+                });
 
-<div class="row mt-3">
-    <div class="col-md-6">
-        <div>
-            <h2>Amortization Table</h2>
-            <table class="table">
-                <thead>
-                <tr>
-                    <th scope="col">Payment number</th>
-                    <th scope="col">Payment Date</th>
-                    <th scope="col">Starting Balance</th>
-                    <th scope="col">Payment Amount</th>
-                    <th scope="col">Principal Payment</th>
-                    <th scope="col">Interest Payment</th>
-                    <th scope="col">Total Payment</th>
-                    <th scope="col">Ending Balance</th>
-                    <th scope="col">Accumulated Interest</th>
-                    <th scope="col">Accumulated Principal Payment</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<script>
-    $(document).ready(function() {
-        $('.dropdown-item').click(function(e) {
-            e.preventDefault();
-            var mortgageId = $(this).data('id');
-            updateMortgageDetails(mortgageId);
-        });
-
-        function updateMortgageDetails(mortgageId) {
-
-            $.ajax({
-                url: '/get_mortgage_details/' + mortgageId,
-                method: 'GET',
-                success: function(response) {
-
-                    $('#mortgage-number').text(response.number);
-                    $('#mortgage-name').text(response.name);
-
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error fetching mortgage details:', error);
+                function logout() {
+                    console.log("Logout button clicked");
+                    window.location.href = "{{ url_for('logout') }}";
                 }
-            });
-        }
-    });
 
+                var chartDiv = document.getElementById('chart');
+                var chartHtml = '{{ chart_html | safe }}';
 
-     function logout() {
-        console.log("Logout button clicked");
-        window.location.href = "{{ url_for('logout') }}";
-    }
+                function toggleDisplay(option) {
+                    var fortnightlyElements = document.querySelectorAll('.fortnightly');
+                    var monthlyElements = document.querySelectorAll('.monthly');
 
-    var chartDiv = document.getElementById('chart');
-    var chartHtml = '{{ chart_html | safe }}';
-
-
-
-</script>
-</body>
+                    if (option === 'fortnightly') {
+                        fortnightlyElements.forEach(function(element) {
+                            element.style.display = 'table-cell';
+                        });
+                        monthlyElements.forEach(function(element) {
+                            element.style.display = 'none';
+                        });
+                    } else {
+                        fortnightlyElements.forEach(function(element) {
+                            element.style.display = 'none';
+                        });
+                        monthlyElements.forEach(function(element) {
+                            element.style.display = 'table-cell';
+                        });
+                    }
+                }
+            </script>
+    </body>
 </html>

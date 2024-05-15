@@ -118,9 +118,47 @@ def index():
             app.logger.error(error_message)
             return render_template("index.html", error_message=error_message)
 
-        username = session['username']
-        return render_template("index.html", username=username, mortgages=mortgages, mortgage_details=mortgage_details,
-                               chart_html=chart_html)
+        # calculate maturity information for each mortgage
+        mortgage_maturity_info = []
+        for mortgage in mortgages:
+            mortgage_id = mortgage[0]
+            initial_interest = mortgage[3]
+            initial_term = mortgage[4]
+            initial_principal = mortgage[2]
+            deposit = mortgage[5]
+            extra_costs = mortgage[6]
+
+            mortgage_obj = Mortgage(mortgage_id=mortgage_id,
+                                    mortgage_name=mortgage[1],
+                                    initial_interest=initial_interest,
+                                    initial_term=initial_term,
+                                    initial_principal=initial_principal,
+                                    deposit=deposit,
+                                    extra_costs=extra_costs)
+
+            full_term_payments = mortgage_obj.payments_over_full_term_fortnight()
+            reduced_term_payments = mortgage_obj.payments_over_reduced_term_fortnight("n")
+            full_term_amortization = mortgage_obj.full_term_amortize_fortnight()
+            reduced_term_amortization = mortgage_obj.estimated_reduced_term_amortize_fortnight("n")
+            interest_over_full_term = mortgage_obj.interest_over_full_term_fortnight()
+            principal_plus_interest = mortgage_obj.principal_and_interest_fortnight()
+
+            maturity_info = {
+                'full_term_payments': full_term_payments,
+                'reduced_term_payments': reduced_term_payments,
+                'full_term_amortization': full_term_amortization,
+                'reduced_term_amortization': reduced_term_amortization,
+                'interest_over_full_term': interest_over_full_term,
+                'principal_plus_interest': principal_plus_interest
+            }
+
+            mortgage_maturity_info.append(maturity_info)
+
+        # pass mortgage details and maturity information to the template
+        return render_template("index.html", username=session['username'], mortgages=mortgages,
+                               mortgage_details=mortgage_details, chart_html=chart_html,
+                               mortgage_maturity_info=mortgage_maturity_info)
+
     else:
         return redirect(url_for("login"))
 
@@ -182,7 +220,7 @@ def new_mortgage():
 
         conn.close()
 
-    # return redirect(url_for('index'))
+        return redirect(url_for('index'))
 
     return render_template('new_mortgage.html',
                            mortgage_name=mortgage_name,
@@ -192,9 +230,6 @@ def new_mortgage():
                            fortnightly_interest=fortnightly_interest,
                            fortnightly_principal_repayment=fortnightly_principal_repayment,
                            fortnightly_repayment=fortnightly_repayment)
-
-
-
 
 
 def generate_interest_principal_chart(interests, principals, mortgage_names):

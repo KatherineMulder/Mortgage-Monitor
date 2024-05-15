@@ -21,8 +21,9 @@
                         <label for="Mortgage">Select Mortgage:</label>
                         <select id="Mortgage" class="form-control" required>
                             <option selected disabled>Select Mortgage Name</option>
-                            <option value="Mortgage1">Mortgage 1</option>
-                            <option value="Mortgage2">Mortgage 2</option>
+                            {% for mortgage_detail in mortgage_details[1:] %}
+                                <option value="{{ mortgage_detail[0] }}">Mortgage Name: {{ mortgage_detail[1] }}</option>
+                            {% endfor %}
                         </select>
                     </div>
                 </div>
