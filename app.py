@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 import psycopg2
-from mortgageExercise import Mortgage
 import plotly.graph_objs as go
 from user import User
 from auth import authenticate_user
@@ -85,80 +84,6 @@ def signup():
 
 @app.route("/index")
 def index():
-    if 'username' in session:
-        try:
-            with psycopg2.connect(
-                    dbname="mortgage_calculator",
-                    user="postgres",
-                    password="admin123",
-                    host="localhost",
-                    port="5432") as conn:
-
-                conn.autocommit = True
-
-                with conn.cursor() as cursor:
-                    cursor.execute("SELECT * FROM mortgages")
-                    mortgages = cursor.fetchall()
-
-                    mortgage_details = [(mortgage[0], mortgage[1], mortgage[2], mortgage[3], mortgage[4], mortgage[5],
-                                         mortgage[6], mortgage[7], mortgage[8], mortgage[9], mortgage[10], mortgage[11],
-                                         mortgage[12])
-                                        for mortgage in mortgages]
-
-                    interests = [mortgage[10] for mortgage in mortgages]
-                    principals = [mortgage[11] for mortgage in mortgages]
-                    mortgage_names = [mortgage[1] for mortgage in mortgages]
-
-                    chart_html = generate_interest_principal_chart(interests, principals, mortgage_names)
-
-        except psycopg2.Error as e:
-            error_message = "Error fetching data from database: {}".format(e)
-            app.logger.error(error_message)
-            return render_template("index.html", error_message=error_message)
-
-        # calculate maturity information for each mortgage
-        mortgage_maturity_info = []
-        for mortgage in mortgages:
-            mortgage_id = mortgage[0]
-            initial_interest = mortgage[3]
-            initial_term = mortgage[4]
-            initial_principal = mortgage[2]
-            deposit = mortgage[5]
-            extra_costs = mortgage[6]
-
-            mortgage_obj = Mortgage(mortgage_id=mortgage_id,
-                                    mortgage_name=mortgage[1],
-                                    initial_interest=initial_interest,
-                                    initial_term=initial_term,
-                                    initial_principal=initial_principal,
-                                    deposit=deposit,
-                                    extra_costs=extra_costs)
-
-            full_term_payments = mortgage_obj.payments_over_full_term_fortnight()
-            reduced_term_payments = mortgage_obj.payments_over_reduced_term_fortnight("n")
-            full_term_amortization = mortgage_obj.full_term_amortize_fortnight()
-            reduced_term_amortization = mortgage_obj.estimated_reduced_term_amortize_fortnight("n")
-            interest_over_full_term = mortgage_obj.interest_over_full_term_fortnight()
-            principal_plus_interest = mortgage_obj.principal_and_interest_fortnight()
-
-            maturity_info = {
-                'full_term_payments': full_term_payments,
-                'reduced_term_payments': reduced_term_payments,
-                'full_term_amortization': full_term_amortization,
-                'reduced_term_amortization': reduced_term_amortization,
-                'interest_over_full_term': interest_over_full_term,
-                'principal_plus_interest': principal_plus_interest
-            }
-
-            mortgage_maturity_info.append(maturity_info)
-
-        # pass mortgage details and maturity information to the template
-        return render_template("index.html", username=session['username'], mortgages=mortgages,
-                               mortgage_details=mortgage_details, chart_html=chart_html,
-                               mortgage_maturity_info=mortgage_maturity_info)
-
-    else:
-        return redirect(url_for("login"))
 
 
 @app.route('/new_mortgage', methods=['GET', 'POST'])
