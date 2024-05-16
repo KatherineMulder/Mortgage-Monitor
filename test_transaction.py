@@ -1,6 +1,6 @@
 import pytest
 from transaction import Transaction
-from mortgage import Mortgage
+from mortgageExercise import Mortgage
 
 @pytest.fixture
 def initial_mortgage():

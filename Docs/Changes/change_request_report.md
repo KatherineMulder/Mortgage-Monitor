@@ -10,25 +10,18 @@ Entire layout for displaying the main page.
 14/05/2024
 
 ## Change Description
-For the programming part, my logical thinking differs from our original design. I will break down the programming into more classes to represent the outcome.
-
+For the programming part, my logical thinking differs from our original design. I will break down the programming add one more class which is the mortgage_monitor to represent the outcome.
 The original design consists of three class diagrams: users, mortgage, and transaction. The wireframe for the index page displays all the data in a table layout, matching the Excel spreadsheet details.
-
 In my design, I have incorporated more classes into my programming:
-
-- **Mortgage:** This class will be the core of your application, handling calculations related to mortgages, such as monthly payments, total interest paid, remaining balance, etc. It might contain methods like `calculateMonthlyPayment`, `calculateTotalInterest`, `calculateRemainingBalance`, etc.
-
-- **Transaction:** This class represents a single transaction or adjustment made by the user, containing information about changes made to the mortgage, such as the new interest rate, loan amount, term, etc. This class may also have methods to apply the transaction to the current mortgage analysis.
-
-- **MortgageSummary:** This class will represent the summary of the mortgage analysis, containing information such as total loan amount, interest rate, term, monthly payment, total interest paid, remaining balance, etc. It may have methods to generate and update the summary based on the current mortgage information.
-
-- **User:** This class represents a user of your application, containing information about the user, such as their name, email, etc. It could also store a list of transactions made by the user.
-
-- **AnalysisPeriod:** This class represents the period for which the analysis is being shown (e.g., monthly, annually, etc.), containing methods to adjust the period and update the analysis accordingly.
-
-- **App:** This class will handle interactions with the web interface, taking user inputs such as mortgage details and transaction adjustments, and using the other classes to perform calculations and update the interface accordingly.
-
-Due to the different class diagram, it directed me to represent the design differently than the original wireframe. Overall, it's just design changes, and the functionality remains the same.
+- **Mortgage:** 
+- **Transaction:**  financial transactions related to mortgages, such as payments, disbursements, or fees.
+- **Mortgage_monitor:** Main class overseeing the system.
+- **User:**
+- **AnalysisPeriod:** This class represents the time period
+- **App:** handle interactions with the web interface
+overall: 
+- user - 
+I would like to represent the design differently than the original wireframe just the index page and the functionality remains the same.
 
 ## Scope
 This change request focuses on updating the appearance and layout of our web application and programming class structure. It involves rearranging elements like menus, page structures, colors, fonts, and overall design to enhance the user experience without altering functionality.
@@ -52,4 +45,4 @@ This change request focuses on updating the appearance and layout of our web app
 after implementation to identify any impacts or issues.
 
 ## Attachments
-
+![img.png](mortgage_attribute.png)

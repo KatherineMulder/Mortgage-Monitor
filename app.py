@@ -1,7 +1,10 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 import psycopg2
-from mortgage import Mortgage
+from mortgageExercise import Mortgage
 import plotly.graph_objs as go
+from user import User
+from auth import authenticate_user
+
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "secret key"
@@ -33,15 +36,20 @@ def login():
             conn = connect_to_database()
             cursor = conn.cursor()
 
-            cursor.execute("SELECT * FROM users WHERE username = %s AND password = %s", (username, password))
+            cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
             user = cursor.fetchone()
 
             cursor.close()
             conn.close()
 
             if user:
-                session['username'] = username
-                return redirect(url_for("index"))
+                # if the entered password matches the stored password
+                if password == user[2]:
+                    session['username'] = username
+                    return redirect(url_for("index"))
+                else:
+
+                    return render_template('login.html', error="Invalid username or password")
             else:
                 return redirect(url_for("signup"))
 
@@ -62,21 +70,11 @@ def signup():
             return render_template("signup.html", error="Passwords do not match")
 
         try:
-            conn = connect_to_database()
-            cursor = conn.cursor()
 
-            cursor.execute("SELECT 1 FROM users WHERE username = %s", (username,))
-            existing_user = cursor.fetchone()
-
-            if existing_user:
+            if User.retrieve_user_by_username(username):
                 return render_template("signup.html", error="Username already exists")
 
-            cursor.execute("INSERT INTO users (username, password) VALUES (%s, %s)", (username, password))
-            conn.commit()
-
-            cursor.close()
-            conn.close()
-
+            User.create_user(username, password)
             return redirect(url_for("index"))
 
         except Exception as e:

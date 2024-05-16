@@ -1,5 +1,5 @@
 import pytest
-from mortgage import Mortgage
+from mortgageExercise import Mortgage
 from decimal import Decimal
 
 @pytest.fixture

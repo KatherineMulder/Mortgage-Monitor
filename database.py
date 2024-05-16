@@ -2,6 +2,7 @@ import psycopg2
 
 
 def create_database():
+    # connect to the database
     default_conn = psycopg2.connect(
         dbname="postgres",
         user="postgres",
@@ -30,39 +31,18 @@ def create_database():
     conn.autocommit = True
     cursor = conn.cursor()
 
+    # create user tables
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS mortgages (
-            mortgage_id SERIAL PRIMARY KEY,
-            mortgage_name VARCHAR(100) NOT NULL,
-            principal NUMERIC NOT NULL,
-            interest NUMERIC NOT NULL,
-            term_years INTEGER NOT NULL,
-            deposit NUMERIC,
-            extra_costs NUMERIC,
-            monthly_interest NUMERIC,
-            monthly_repayment NUMERIC,
-            monthly_principal_repayment NUMERIC,
-            fortnightly_interest NUMERIC,
-            fortnightly_repayment NUMERIC,
-            fortnightly_principal_repayment NUMERIC
-        )
-    """)
-
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS transactions (
-            transaction_id SERIAL PRIMARY KEY,
-            transaction_date DATE NOT NULL,
-            new_principal NUMERIC NOT NULL,
-            new_interest_rate NUMERIC NOT NULL,
-            new_extra_cost NUMERIC NOT NULL,
-            new_loan_term INTEGER NOT NULL,
-            adjustment_description VARCHAR(255),
-            mortgage_id INTEGER REFERENCES mortgages(mortgage_id)
-        )
+            CREATE TABLE IF NOT EXISTS users (
+                user_id SERIAL PRIMARY KEY,
+                username VARCHAR(50) UNIQUE NOT NULL,
+                password VARCHAR(50) NOT NULL
+            )
     """)
 
     conn.commit()
     conn.close()
 
 
-create_database()
+if __name__ == "__main__":
+    create_database()
