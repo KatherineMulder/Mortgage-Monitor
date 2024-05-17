@@ -145,7 +145,7 @@ class Mortgage:
             else:
                 raise AttributeError(f"Invalid attribute: {key}")
 
-        # Recalculate the initial payment breakdown, maturity, and amortization schedule
+        # recalculate
         self.calculate_initial_payment_breakdown()
         self.calculate_mortgage_maturity()
         self.amortization_table()
@@ -154,7 +154,7 @@ class Mortgage:
         """Delete the mortgage by resetting all attributes."""
         self.__init__()
 
-    def make_boom_payment(self, lump_sum: float):
+    def make_balloon_payment(self, lump_sum: float):
         if lump_sum <= 0:
             raise ValueError("Lump sum payment must be greater than zero")
         if lump_sum > self._initial_principal:
@@ -365,7 +365,7 @@ class Mortgage:
 if __name__ == "__main__":
     M = Mortgage()
     try:
-        # Gather inputs
+
         M.gather_inputs(
             principal=810000,
             interest=0.05,
@@ -399,7 +399,7 @@ if __name__ == "__main__":
             print(row)
 
         # Test boom payment
-        M.make_boom_payment(100000)
+        M.make_balloon_payment(100000)
         print("\nAfter Boom Payment of 100000:")
         M.calculate_mortgage_maturity()
         for key, value in M.mortgage_maturity.items():

@@ -26,17 +26,17 @@ class Transaction:
             raise ValueError("Mortgage ID not found")
         return self.mortgages[mortgage_id]
 
-    def make_boom_payment(self, mortgage_id: int, lump_sum: float):
+    def make_balloon_payment(self, mortgage_id: int, lump_sum: float):
         if mortgage_id not in self.mortgages:
             raise ValueError("Mortgage ID not found")
         mortgage = self.mortgages[mortgage_id]
-        mortgage.make_boom_payment(lump_sum)
+        mortgage.make_balloon_payment(lump_sum)
 
 
 if __name__ == "__main__":
     transaction_manager = Transaction()
 
-    # Create a new mortgage
+
     mortgage = Mortgage()
     mortgage.gather_inputs(
         principal=810000,
@@ -52,11 +52,11 @@ if __name__ == "__main__":
     mortgage.calculate_mortgage_maturity()
     mortgage.amortization_table()
 
-    # Add the mortgage to the transaction manager
+   # add
     transaction_manager.add_mortgage(1, mortgage)
 
-    # Make a boom payment
-    transaction_manager.make_boom_payment(1, 100000)
+    # make balloon
+    transaction_manager.make_balloon_payment(1, 100000)
     updated_mortgage = transaction_manager.get_mortgage(1)
     print("Updated Mortgage Details After Boom Payment:")
     for key, value in updated_mortgage.mortgage_maturity.items():
