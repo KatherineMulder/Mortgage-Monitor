@@ -1,115 +1,70 @@
-from mortgageExercise import Mortgage
-from decimal import Decimal
-
-
-"""
-attributes:
-transaction_id
-mortgage_id
-amount -- for the amount of transaction
-transaction_type -- for the fee, disbursement etc
-timestamp
-"""
-
-"""
-methods:
-record_transaction() --record a new transaction.
-"""
+from mortgage import Mortgage
 
 
 class Transaction:
-    def __init__(self, transaction_date, new_principal, new_interest_rate, new_extra_cost, new_loan_term,
-                 adjustment_description):
-        self.mortgage = None
-        self._transaction_date = transaction_date
-        self._new_loan_amount = new_principal
-        self._new_interest_rate = new_interest_rate
-        self._new_extra_cost = new_extra_cost
-        self._new_loan_term = new_loan_term
-        self._adjustment_description = adjustment_description
+    def __init__(self):
+        self.mortgages = {}
 
+    def add_mortgage(self, mortgage_id: int, mortgage: Mortgage):
+        if mortgage_id in self.mortgages:
+            raise ValueError("Mortgage ID already exists")
+        self.mortgages[mortgage_id] = mortgage
 
-    # @property
-    # def transaction_date(self):
-    #     return self._transaction_date
-    #
-    # @property
-    # def new_loan_amount(self):
-    #     return self._new_loan_amount
-    #
-    # @property
-    # def new_interest_rate(self):
-    #     return self._new_interest_rate
-    #
-    # @property
-    # def new_extra_cost(self):
-    #     return self._new_extra_cost
-    #
-    # @property
-    # def new_loan_term(self):
-    #     return self._new_loan_term
-    #
-    # @property
-    # def adjustment_description(self):
-    #     return self._adjustment_description
-    #
-    # @transaction_date.setter
-    # def transaction_date(self, value):
-    #     self._transaction_date = value
-    #
-    # @new_loan_amount.setter
-    # def new_loan_amount(self, value):
-    #     self._new_loan_amount = value
-    #
-    # @new_interest_rate.setter
-    # def new_interest_rate(self, value):
-    #     self._new_interest_rate = value
-    #
-    # @new_extra_cost.setter
-    # def new_extra_cost(self, value):
-    #     self._new_extra_cost = value
-    #
-    # @new_loan_term.setter
-    # def new_loan_term(self, value):
-    #     self._new_loan_term = value
-    #
-    # @adjustment_description.setter
-    # def adjustment_description(self, value):
-    #     self._adjustment_description = value
+    def update_mortgage(self, mortgage_id: int, **kwargs):
+        if mortgage_id not in self.mortgages:
+            raise ValueError("Mortgage ID not found")
+        mortgage = self.mortgages[mortgage_id]
+        mortgage.update_mortgage(**kwargs)
 
-    # def calculate_monthly_interest(self):
-    #     if self.mortgage:
-    #         return self.mortgage.calculate_monthly_interest()
-    #
-    # def calculate_monthly_repayment(self):
-    #     if self.mortgage:
-    #         return self.mortgage.calculate_monthly_repayment()
-    #
-    # def calculate_fortnightly_interest(self):
-    #     if self.mortgage:
-    #         return self.mortgage.calculate_fortnightly_interest()
-    #
-    # def calculate_fortnightly_repayment(self):
-    #     if self.mortgage:
-    #         return self.mortgage.calculate_fortnightly_repayment()
+    def delete_mortgage(self, mortgage_id: int):
+        if mortgage_id not in self.mortgages:
+            raise ValueError("Mortgage ID not found")
+        del self.mortgages[mortgage_id]
 
-    # def update_mortgage(self):
-    #     if self.mortgage:
-    #         self.mortgage.update_mortgage(self._new_loan_amount,
-    #                                       self._new_interest_rate,
-    #                                       self._new_loan_term,
-    #                                       self._new_extra_cost,
-    #                                       self._adjustment_description)
-    #
-    # def __str__(self):
-    #     return (f"Transaction Date: {self._transaction_date}, "
-    #             f"New Loan Amount: {self._new_loan_amount}, "
-    #             f"New Interest Rate: {self._new_interest_rate}, "
-    #             f"New extra Cost: {self._new_extra_cost}, "
-    #             f"New Loan Term: {self._new_loan_term}, "
-    #             f"Adjustment Description: {self._adjustment_description}")
+    def get_mortgage(self, mortgage_id: int) -> Mortgage:
+        if mortgage_id not in self.mortgages:
+            raise ValueError("Mortgage ID not found")
+        return self.mortgages[mortgage_id]
+
+    def make_boom_payment(self, mortgage_id: int, lump_sum: float):
+        if mortgage_id not in self.mortgages:
+            raise ValueError("Mortgage ID not found")
+        mortgage = self.mortgages[mortgage_id]
+        mortgage.make_boom_payment(lump_sum)
 
 
 if __name__ == "__main__":
-    print("Start Tests")
+    transaction_manager = Transaction()
 
+    # Create a new mortgage
+    mortgage = Mortgage()
+    mortgage.gather_inputs(
+        principal=810000,
+        interest=0.05,
+        term=20,
+        extra_costs=10000,
+        deposit=50000,
+        payment_override_enabled=True,
+        monthly_payment_override=6000,
+        fortnightly_payment_override=3000
+    )
+    mortgage.calculate_initial_payment_breakdown()
+    mortgage.calculate_mortgage_maturity()
+    mortgage.amortization_table()
+
+    # Add the mortgage to the transaction manager
+    transaction_manager.add_mortgage(1, mortgage)
+
+    # Make a boom payment
+    transaction_manager.make_boom_payment(1, 100000)
+    updated_mortgage = transaction_manager.get_mortgage(1)
+    print("Updated Mortgage Details After Boom Payment:")
+    for key, value in updated_mortgage.mortgage_maturity.items():
+        print(f"  {key}: {value}")
+
+    # Delete the mortgage
+    transaction_manager.delete_mortgage(1)
+    try:
+        deleted_mortgage = transaction_manager.get_mortgage(1)
+    except ValueError as e:
+        print(e)  # Expected output: Mortgage ID not found

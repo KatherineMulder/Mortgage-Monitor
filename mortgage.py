@@ -2,21 +2,6 @@ import math
 from datetime import datetime
 from typing import List, Optional, Dict
 
-"""
-user input: Gather inputs for principal, interest, term, extra costs, deposit, and whether there's a payment override.
-initial payment breakdown: Calculate the initial monthly and fortnightly payments, including:
-total amount borrowed
-estimated repayment ±0.1%
-initial interest, principal, and extra costs
-total repayment
-payment Override: If the user opts for an override, adjust the payments accordingly.
-mortgage maturity calculation: Calculate details for both full and reduced terms, including:
-total payments over full and reduced terms
-interest and principal amounts
-savings with reduced terms
-amortization table: Generate the amortization table showing the breakdown of payments over the term of the mortgage.
-"""
-
 
 class Mortgage:
     def __init__(self,
@@ -38,7 +23,7 @@ class Mortgage:
         self.fortnightly_payment_override: Optional[float] = fortnightly_payment_override
         self.initial_payment_breakdown: Dict = {}
         self.mortgage_maturity: Dict = {}
-        self.amortization_schedule: List = []
+        self.amortization_schedule: Dict[str, List[Dict[str, float]]] = {}
 
     @property
     def mortgage_id(self) -> Optional[int]:
@@ -150,6 +135,35 @@ class Mortgage:
         self.monthly_payment_override = monthly_payment_override
         self.fortnightly_payment_override = fortnightly_payment_override
 
+    def update_mortgage(self, **kwargs):
+        """Update the attributes of the mortgage instance."""
+        for key, value in kwargs.items():
+            if hasattr(self, f"_{key}"):
+                setattr(self, f"_{key}", value)
+            elif hasattr(self, key):
+                setattr(self, key, value)
+            else:
+                raise AttributeError(f"Invalid attribute: {key}")
+
+        # Recalculate the initial payment breakdown, maturity, and amortization schedule
+        self.calculate_initial_payment_breakdown()
+        self.calculate_mortgage_maturity()
+        self.amortization_table()
+
+    def delete_mortgage(self):
+        """Delete the mortgage by resetting all attributes."""
+        self.__init__()
+
+    def make_boom_payment(self, lump_sum: float):
+        if lump_sum <= 0:
+            raise ValueError("Lump sum payment must be greater than zero")
+        if lump_sum > self._initial_principal:
+            raise ValueError("Lump sum payment cannot be greater than the remaining principal")
+        self._initial_principal -= lump_sum
+        self.calculate_initial_payment_breakdown()
+        self.calculate_mortgage_maturity()
+        self.amortization_table()
+
     def calculate_initial_payment_breakdown(self):
         principal = self._initial_principal
         interest = self._initial_interest
@@ -206,72 +220,62 @@ class Mortgage:
         # full term
         full_term_payments_fortnightly = term * 26
         interest_over_full_term_fortnightly = details['estimated_repayment_fortnightly'] * 26 * term - principal
-        principal_plus_interest_full_term_fortnightly = principal + interest_over_full_term_fortnightly
-
-        # reduced term
-        if not override:
-            payments_reduced_term_fortnightly = full_term_payments_fortnightly
-            interest_over_reduced_term_fortnightly = 0
-            interest_saved_over_reduced_term_fortnightly = 0
-            principal_plus_interest_reduced_term_fortnightly = principal_plus_interest_full_term_fortnightly
-        else:
-            payments_reduced_term_fortnightly = -math.log(
-                1 - principal / fortnightly_override_amount * (interest / 26)) / math.log(1 + (interest / 26))
-            estimated_reduced_term_fortnightly = payments_reduced_term_fortnightly / 26
-            interest_over_reduced_term_fortnightly = (fortnightly_override_amount * 26 *
-                                                      estimated_reduced_term_fortnightly - principal)
-            interest_saved_over_reduced_term_fortnightly = (interest_over_full_term_fortnightly -
-                                                            interest_over_reduced_term_fortnightly)
-            principal_plus_interest_reduced_term_fortnightly = (interest_over_reduced_term_fortnightly +
-                                                                principal)
-
-        estimated_reduced_term_amortize_fortnightly = payments_reduced_term_fortnightly / 26
+        principal_plus_interest_full_term_fortnightly = interest_over_full_term_fortnightly + principal
 
         full_term_payments_monthly = term * 12
         interest_over_full_term_monthly = details['estimated_repayment_monthly'] * 12 * term - principal
-        principal_plus_interest_full_term_monthly = principal + interest_over_full_term_monthly
+        principal_plus_interest_full_term_monthly = interest_over_full_term_monthly + principal
 
-        # reduced
-        if not override:
-            payments_reduced_term_monthly = full_term_payments_monthly
-            interest_over_reduced_term_monthly = 0
-            interest_saved_over_reduced_term_monthly = 0
-            principal_plus_interest_reduced_term_monthly = principal_plus_interest_full_term_monthly
-        else:
-            payments_reduced_term_monthly = -math.log(
-                1 - principal / monthly_override_amount * (interest / 12)) / math.log(1 + (interest / 12))
-            estimated_reduced_term_monthly = payments_reduced_term_monthly / 12
-            interest_over_reduced_term_monthly = (monthly_override_amount * 12 * estimated_reduced_term_monthly -
-                                                  principal)
-            interest_saved_over_reduced_term_monthly = (interest_over_full_term_monthly -
-                                                        interest_over_reduced_term_monthly)
-            principal_plus_interest_reduced_term_monthly = interest_over_reduced_term_monthly + principal
+        # term override
+        remaining_principal_monthly = principal
+        total_interest_paid_monthly = 0
+        total_repayment_monthly = 0
+        total_interest_saved_monthly = 0
+        months_to_repay = 0
 
-        estimated_reduced_term_amortize_monthly = payments_reduced_term_monthly / 12
+        if override and monthly_override_amount is not None:
+            while remaining_principal_monthly > 0:
+                months_to_repay += 1
+                interest_paid_this_month = remaining_principal_monthly * (interest / 12)
+                principal_paid_this_month = monthly_override_amount - interest_paid_this_month
+                remaining_principal_monthly -= principal_paid_this_month
+                total_interest_paid_monthly += interest_paid_this_month
+                total_repayment_monthly += monthly_override_amount
+
+            total_interest_saved_monthly = interest_over_full_term_monthly - total_interest_paid_monthly
+
+        remaining_principal_fortnightly = principal
+        total_interest_paid_fortnightly = 0
+        total_repayment_fortnightly = 0
+        total_interest_saved_fortnightly = 0
+        fortnights_to_repay = 0
+
+        if override and fortnightly_override_amount is not None:
+            while remaining_principal_fortnightly > 0:
+                fortnights_to_repay += 1
+                interest_paid_this_fortnight = remaining_principal_fortnightly * (interest / 26)
+                principal_paid_this_fortnight = fortnightly_override_amount - interest_paid_this_fortnight
+                remaining_principal_fortnightly -= principal_paid_this_fortnight
+                total_interest_paid_fortnightly += interest_paid_this_fortnight
+                total_repayment_fortnightly += fortnightly_override_amount
+
+            total_interest_saved_fortnightly = interest_over_full_term_fortnightly - total_interest_paid_fortnightly
 
         self.mortgage_maturity = {
-            "fortnightly": {
-                "full_term_payments": full_term_payments_fortnightly,
-                "reduced_term_payments": payments_reduced_term_fortnightly,
-                "full_term_amortize": full_term_payments_fortnightly / 26,
-                "estimated_reduced_term_amortize": estimated_reduced_term_amortize_fortnightly,
-                "interest_over_full_term": interest_over_full_term_fortnightly,
-                "principal_plus_interest_full_term": principal_plus_interest_full_term_fortnightly,
-                "interest_over_reduced_term": interest_over_reduced_term_fortnightly,
-                "interest_saved_over_reduced_term": interest_saved_over_reduced_term_fortnightly,
-                "principal_plus_interest_reduced_term": principal_plus_interest_reduced_term_fortnightly
-            },
-            "monthly": {
-                "full_term_payments": full_term_payments_monthly,
-                "reduced_term_payments": payments_reduced_term_monthly,
-                "full_term_amortize": full_term_payments_monthly / 12,
-                "estimated_reduced_term_amortize": estimated_reduced_term_amortize_monthly,
-                "interest_over_full_term": interest_over_full_term_monthly,
-                "principal_plus_interest_full_term": principal_plus_interest_full_term_monthly,
-                "interest_over_reduced_term": interest_over_reduced_term_monthly,
-                "interest_saved_over_reduced_term": interest_saved_over_reduced_term_monthly,
-                "principal_plus_interest_reduced_term": principal_plus_interest_reduced_term_monthly
-            }
+            "full_term_payments_fortnightly": full_term_payments_fortnightly,
+            "interest_over_full_term_fortnightly": interest_over_full_term_fortnightly,
+            "principal_plus_interest_full_term_fortnightly": principal_plus_interest_full_term_fortnightly,
+            "full_term_payments_monthly": full_term_payments_monthly,
+            "interest_over_full_term_monthly": interest_over_full_term_monthly,
+            "principal_plus_interest_full_term_monthly": principal_plus_interest_full_term_monthly,
+            "total_interest_paid_monthly": total_interest_paid_monthly,
+            "total_repayment_monthly": total_repayment_monthly,
+            "total_interest_saved_monthly": total_interest_saved_monthly,
+            "months_to_repay": months_to_repay,
+            "total_interest_paid_fortnightly": total_interest_paid_fortnightly,
+            "total_repayment_fortnightly": total_repayment_fortnightly,
+            "total_interest_saved_fortnightly": total_interest_saved_fortnightly,
+            "fortnights_to_repay": fortnights_to_repay
         }
 
     def amortization_table(self):
@@ -385,10 +389,7 @@ if __name__ == "__main__":
         M.calculate_mortgage_maturity()
         print("Mortgage Maturity Details:")
         print("Monthly:")
-        for key, value in M.mortgage_maturity["monthly"].items():
-            print(f"  {key}: {value}")
-        print("Fortnightly:")
-        for key, value in M.mortgage_maturity["fortnightly"].items():
+        for key, value in M.mortgage_maturity.items():
             print(f"  {key}: {value}")
         print()
 
@@ -396,8 +397,16 @@ if __name__ == "__main__":
         print("Amortization Table (Monthly - first 5 periods):")
         for row in amortization_schedule["monthly"][:5]:  # show first 5 data
             print(row)
-        print("Amortization Table (Fortnightly - first 5 periods):")
-        for row in amortization_schedule["fortnightly"][:5]:
+
+        # Test boom payment
+        M.make_boom_payment(100000)
+        print("\nAfter Boom Payment of 100000:")
+        M.calculate_mortgage_maturity()
+        for key, value in M.mortgage_maturity.items():
+            print(f"  {key}: {value}")
+        amortization_schedule = M.amortization_table()
+        print("Amortization Table (Monthly - first 5 periods):")
+        for row in amortization_schedule["monthly"][:5]:  # show first 5 data
             print(row)
 
     except Exception as e:
