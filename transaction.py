@@ -113,30 +113,3 @@ class Transaction:
 if __name__ == "__main__":
     print("Start Tests")
 
-    # initial_loan_amount = 100000
-    # initial_interest_rate = 4.5
-    # initial_loan_term = 30
-    # existing_mortgage = Mortgage(mortgage_id=1, mortgage_name="Initial Mortgage",
-    #                              initial_interest=initial_interest_rate,
-    #                              initial_term=initial_loan_term, initial_principal=initial_loan_amount)
-    #
-    # transaction_date = "2024-05-20"
-    # new_loan_amount = 95000
-    # new_interest_rate = 4.3
-    # new_loan_term = 25
-    # new_extra_cost = 500
-    # adjustment_description = "test"
-    #
-    # transaction = Transaction(transaction_date, new_loan_amount,
-    #                           new_interest_rate, new_extra_cost,
-    #                           new_loan_term, adjustment_description)
-    #
-    # transaction.mortgage = existing_mortgage
-    # print("Before Transaction:")
-    # print(existing_mortgage)
-    # transaction.update_mortgage()
-    # print("\nAfter Transaction:")
-    # print(existing_mortgage)
-    # print("\nMonthly Repayment:", existing_mortgage.calculate_monthly_repayment())
-    # print("Fortnightly Repayment:", existing_mortgage.calculate_fortnightly_repayment())
-    # print("End Tests")

@@ -1,5 +1,4 @@
 from decimal import Decimal
-from mortgageExercise import Mortgage
 
 
 class MortgageMonitor:
