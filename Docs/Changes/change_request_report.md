@@ -45,4 +45,3 @@ This change request focuses on updating the appearance and layout of our web app
 after implementation to identify any impacts or issues.
 
 ## Attachments
-![img.png](mortgage_attribute.png)

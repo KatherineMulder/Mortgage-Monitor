@@ -1,6 +1,19 @@
-import math
 from datetime import datetime
 from typing import List, Optional, Dict
+"""
+User Input: Gather inputs for principal, interest, term, extra costs, deposit, and whether there's a payment override.
+Initial Payment Breakdown: Calculate the initial monthly and fortnightly payments, including:
+Total amount borrowed
+Estimated repayment ±0.1%
+Initial interest, principal, and extra costs
+Total repayment
+Payment Override: If the user opts for an override, adjust the payments accordingly.
+Mortgage Maturity Calculation: Calculate details for both full and reduced terms, including:
+Total payments over full and reduced terms
+Interest and principal amounts
+Savings with reduced terms
+Amortization Table: Generate the amortization table showing the breakdown of payments over the term of the mortgage.
+"""
 
 
 class Mortgage:
@@ -136,7 +149,6 @@ class Mortgage:
         self.fortnightly_payment_override = fortnightly_payment_override
 
     def update_mortgage(self, **kwargs):
-        """Update the attributes of the mortgage instance."""
         for key, value in kwargs.items():
             if hasattr(self, f"_{key}"):
                 setattr(self, f"_{key}", value)
@@ -262,20 +274,24 @@ class Mortgage:
             total_interest_saved_fortnightly = interest_over_full_term_fortnightly - total_interest_paid_fortnightly
 
         self.mortgage_maturity = {
-            "full_term_payments_fortnightly": full_term_payments_fortnightly,
-            "interest_over_full_term_fortnightly": interest_over_full_term_fortnightly,
-            "principal_plus_interest_full_term_fortnightly": principal_plus_interest_full_term_fortnightly,
-            "full_term_payments_monthly": full_term_payments_monthly,
-            "interest_over_full_term_monthly": interest_over_full_term_monthly,
-            "principal_plus_interest_full_term_monthly": principal_plus_interest_full_term_monthly,
-            "total_interest_paid_monthly": total_interest_paid_monthly,
-            "total_repayment_monthly": total_repayment_monthly,
-            "total_interest_saved_monthly": total_interest_saved_monthly,
-            "months_to_repay": months_to_repay,
-            "total_interest_paid_fortnightly": total_interest_paid_fortnightly,
-            "total_repayment_fortnightly": total_repayment_fortnightly,
-            "total_interest_saved_fortnightly": total_interest_saved_fortnightly,
-            "fortnights_to_repay": fortnights_to_repay
+            "monthly": {
+                "full_term_payments": full_term_payments_monthly,
+                "interest_over_full_term": interest_over_full_term_monthly,
+                "principal_plus_interest_full_term": principal_plus_interest_full_term_monthly,
+                "total_interest_paid": total_interest_paid_monthly,
+                "total_repayment": total_repayment_monthly,
+                "total_interest_saved": total_interest_saved_monthly,
+                "months_to_repay": months_to_repay
+            },
+            "fortnightly": {
+                "full_term_payments": full_term_payments_fortnightly,
+                "interest_over_full_term": interest_over_full_term_fortnightly,
+                "principal_plus_interest_full_term": principal_plus_interest_full_term_fortnightly,
+                "total_interest_paid": total_interest_paid_fortnightly,
+                "total_repayment": total_repayment_fortnightly,
+                "total_interest_saved": total_interest_saved_fortnightly,
+                "fortnights_to_repay": fortnights_to_repay
+            }
         }
 
     def amortization_table(self):
@@ -398,7 +414,7 @@ if __name__ == "__main__":
         for row in amortization_schedule["monthly"][:5]:  # show first 5 data
             print(row)
 
-        # Test boom payment
+        # test boom payment
         M.make_balloon_payment(100000)
         print("\nAfter Boom Payment of 100000:")
         M.calculate_mortgage_maturity()

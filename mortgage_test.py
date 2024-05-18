@@ -1,6 +1,6 @@
 import pytest
 from datetime import datetime
-from mortgage import Mortgage  # Assuming the class is saved in a file named mortgage.py
+from mortgage import Mortgage
 
 
 def test_mortgage_initialization():
