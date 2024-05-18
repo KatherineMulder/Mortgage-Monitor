@@ -113,5 +113,39 @@ def test_make_balloon_payment_nonexistent_mortgage():
         transaction_manager.make_balloon_payment(1, 100000)
 
 
+def test_add_comment():
+    transaction_manager = Transaction()
+    mortgage = Mortgage()
+    transaction_manager.add_mortgage(1, mortgage)
+    transaction_manager.add_comment(1, "First comment")
+    comments = transaction_manager.get_comments(1)
+    assert len(comments) == 1
+    assert comments[0] == "First comment"
+
+
+def test_add_comment_nonexistent_id():
+    transaction_manager = Transaction()
+    with pytest.raises(ValueError):
+        transaction_manager.add_comment(1, "Comment on nonexistent mortgage")
+
+
+def test_get_comments():
+    transaction_manager = Transaction()
+    mortgage = Mortgage()
+    transaction_manager.add_mortgage(1, mortgage)
+    transaction_manager.add_comment(1, "First comment")
+    transaction_manager.add_comment(1, "Second comment")
+    comments = transaction_manager.get_comments(1)
+    assert len(comments) == 2
+    assert comments[0] == "First comment"
+    assert comments[1] == "Second comment"
+
+
+def test_get_comments_nonexistent_id():
+    transaction_manager = Transaction()
+    with pytest.raises(ValueError):
+        transaction_manager.get_comments(1)
+
+
 if __name__ == "__main__":
     pytest.main()

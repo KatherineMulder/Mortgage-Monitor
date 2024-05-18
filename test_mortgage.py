@@ -1,6 +1,7 @@
 import pytest
 from datetime import datetime
 from mortgage import Mortgage
+from transaction import Transaction
 
 
 def test_mortgage_initialization():
@@ -165,3 +166,44 @@ def test_create_amortization_table():
     assert "fortnightly" in amortization_schedule
     assert len(amortization_schedule["monthly"]) > 0
     assert len(amortization_schedule["fortnightly"]) > 0
+
+
+def test_add_comment():
+    mortgage = Mortgage()
+    mortgage.add_comment("This is a test comment.")
+    comments = mortgage.get_comments()
+    assert len(comments) == 1
+    assert comments[0] == "This is a test comment."
+
+
+def test_transaction_add_comment():
+    transaction_manager = Transaction()
+
+    mortgage = Mortgage()
+    mortgage.gather_inputs(
+        principal=810000,
+        interest=0.05,
+        term=20,
+        extra_costs=10000,
+        deposit=50000,
+        payment_override_enabled=True,
+        monthly_payment_override=6000,
+        fortnightly_payment_override=3000
+    )
+    mortgage.calculate_initial_payment_breakdown()
+    mortgage.calculate_mortgage_maturity()
+    mortgage.amortization_table()
+
+    transaction_manager.add_mortgage(1, mortgage)
+
+    transaction_manager.add_comment(1, "First comment via transaction manager.")
+    transaction_manager.add_comment(1, "Second comment via transaction manager.")
+
+    comments = transaction_manager.get_comments(1)
+    assert len(comments) == 2
+    assert comments[0] == "First comment via transaction manager."
+    assert comments[1] == "Second comment via transaction manager."
+
+
+if __name__ == "__main__":
+    pytest.main()

@@ -32,6 +32,18 @@ class Transaction:
         mortgage = self.mortgages[mortgage_id]
         mortgage.make_balloon_payment(lump_sum)
 
+    def add_comment(self, mortgage_id: int, comment: str):
+        if mortgage_id not in self.mortgages:
+            raise ValueError("Mortgage ID not found")
+        mortgage = self.mortgages[mortgage_id]
+        mortgage.add_comment(comment)
+
+    def get_comments(self, mortgage_id: int):
+        if mortgage_id not in self.mortgages:
+            raise ValueError("Mortgage ID not found")
+        mortgage = self.mortgages[mortgage_id]
+        return mortgage.get_comments()
+
 
 if __name__ == "__main__":
     transaction_manager = Transaction()
@@ -60,6 +72,16 @@ if __name__ == "__main__":
     print("Updated Mortgage Details After Balloon Payment:")
     for key, value in updated_mortgage.mortgage_maturity.items():
         print(f"  {key}: {value}")
+
+    # add a comment to the mortgage
+    transaction_manager.add_comment(1, "initial mortgage setup completed.")
+    transaction_manager.add_comment(1, "first payment made.")
+
+    # retrieve and display comments
+    comments = transaction_manager.get_comments(1)
+    print("Comments on Mortgage ID 1:")
+    for comment in comments:
+        print(comment)
 
     transaction_manager.delete_mortgage(1)
     try:

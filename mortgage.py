@@ -163,7 +163,7 @@ class Mortgage:
         self.amortization_table()
 
     def delete_mortgage(self):
-        """Delete the mortgage by resetting all attributes."""
+        """delete the mortgage by resetting all attributes."""
         self.__init__()
 
     def make_balloon_payment(self, lump_sum: float):
@@ -377,6 +377,12 @@ class Mortgage:
         }
         return self.amortization_schedule
 
+    def add_comment(self, comment: str):
+        self._comments.append(comment)
+
+    def get_comments(self):
+        return self._comments
+
 
 if __name__ == "__main__":
     M = Mortgage()
@@ -424,6 +430,15 @@ if __name__ == "__main__":
         print("Amortization Table (Monthly - first 5 periods):")
         for row in amortization_schedule["monthly"][:5]:  # show first 5 data
             print(row)
+
+        # add comment
+        M.add_comment("need extra money to for insurance.")
+        M.add_comment("borrow more money for buying a car.")
+
+        print("\nComments:")
+        comments = M.get_comments()
+        for comment in comments:
+            print(comment)
 
     except Exception as e:
         print(f"An error occurred: {e}")
