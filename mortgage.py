@@ -1,19 +1,5 @@
 from datetime import datetime
 from typing import List, Optional, Dict
-"""
-User Input: Gather inputs for principal, interest, term, extra costs, deposit, and whether there's a payment override.
-Initial Payment Breakdown: Calculate the initial monthly and fortnightly payments, including:
-Total amount borrowed
-Estimated repayment ±0.1%
-Initial interest, principal, and extra costs
-Total repayment
-Payment Override: If the user opts for an override, adjust the payments accordingly.
-Mortgage Maturity Calculation: Calculate details for both full and reduced terms, including:
-Total payments over full and reduced terms
-Interest and principal amounts
-Savings with reduced terms
-Amortization Table: Generate the amortization table showing the breakdown of payments over the term of the mortgage.
-"""
 
 
 class Mortgage:
