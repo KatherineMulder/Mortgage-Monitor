@@ -36,7 +36,6 @@ class Transaction:
 if __name__ == "__main__":
     transaction_manager = Transaction()
 
-
     mortgage = Mortgage()
     mortgage.gather_inputs(
         principal=810000,
@@ -52,19 +51,18 @@ if __name__ == "__main__":
     mortgage.calculate_mortgage_maturity()
     mortgage.amortization_table()
 
-   # add
+    # add the mortgage to the transaction manager
     transaction_manager.add_mortgage(1, mortgage)
 
-    # make balloon
+    # balloon pay extra for 100000
     transaction_manager.make_balloon_payment(1, 100000)
     updated_mortgage = transaction_manager.get_mortgage(1)
-    print("Updated Mortgage Details After Boom Payment:")
+    print("Updated Mortgage Details After Balloon Payment:")
     for key, value in updated_mortgage.mortgage_maturity.items():
         print(f"  {key}: {value}")
 
-    # Delete the mortgage
     transaction_manager.delete_mortgage(1)
     try:
         deleted_mortgage = transaction_manager.get_mortgage(1)
     except ValueError as e:
-        print(e)  # Expected output: Mortgage ID not found
+        print(e)
