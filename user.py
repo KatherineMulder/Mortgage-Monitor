@@ -1,64 +1,14 @@
 import psycopg2
 import logging
+import re
 
 logging.basicConfig(level=logging.DEBUG)
-"""
-attribute: 
-user_id
-username
-password
-"""
-"""
-methods:
-initiate_mortgage(mortgage_details)
-update_mortgage
-view_mortgage_details(mortgage_id)
-view_all_mortgages()
-"""
 
 
-class User:
-    def __init__(self, user_id=None, username="", password=""):
-        self._user_id = user_id
-        self._username = username
-        self._password = password
+class UserManager:
+    def __init__(self):
+        self.conn = self.connect_to_database()
 
-    @property
-    def user_id(self):
-        return self._user_id
-
-    @property
-    def username(self):
-        return self._username
-
-    @property
-    def password(self):
-        return self._password
-
-    def show(self):
-        return "\n".join([
-            f"User ID: {self.user_id}",
-            f"Username: {self.username}",
-            f"Password: {self.password}"
-        ])
-
-    def __str__(self):
-        return self.show()
-
-    # methods for interacting with mortgages
-    def initiate_mortgage(self, mortgage_details):
-        pass
-
-    def update_mortgage(self, mortgage_id, updated_details):
-        pass
-
-    def view_mortgage_details(self, mortgage_id):
-        pass
-
-    def view_all_mortgages(self):
-        pass
-
-    # static methods for database operations (e.g., create, retrieve, update, delete users)
     @staticmethod
     def connect_to_database():
         conn = psycopg2.connect(
@@ -71,65 +21,73 @@ class User:
         return conn
 
     @staticmethod
-    def create_user(username, password):
-        conn = User.connect_to_database()
+    def validate_password(password):
+        if len(password) <= 5:
+            return False
+        if not re.search("[a-zA-Z]", password):
+            return False
+        if not re.search("[0-9]", password):
+            return False
+        if not re.search("[!@#$%^&*(),.?\":{}|<>]", password):
+            return False
+        return True
+
+    def create_user(self, username, password):
+        if not self.validate_password(password):
+            logging.error("password must be more than 5 characters long and include letters, numbers, and symbols.")
+            return
+
         cursor = None
         try:
-            cursor = conn.cursor()
+            cursor = self.conn.cursor()
             cursor.execute("INSERT INTO users (username, password) VALUES (%s, %s)", (username, password))
-            conn.commit()
+            self.conn.commit()
         except psycopg2.IntegrityError:
-            logging.warning("User already exists.")
+            logging.warning("user already exists.")
         except psycopg2.Error as e:
-            logging.error(f"Error adding user: {e}")
+            logging.error(f"error adding user: {e}")
         finally:
             if cursor:
                 cursor.close()
-            conn.close()
 
-    @staticmethod
-    def retrieve_user_by_username(username):
+    def retrieve_user_by_username(self, username):
         user = None
-        conn = User.connect_to_database()
         cursor = None
         try:
-            cursor = conn.cursor()
+            cursor = self.conn.cursor()
             cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
             user = cursor.fetchone()
         except psycopg2.Error as e:
-            logging.error(f"Error retrieving user: {e}")
+            logging.error(f"error retrieving user: {e}")
         finally:
             if cursor:
                 cursor.close()
-            conn.close()
         return user
 
-    @staticmethod
-    def update_user_password(username, new_password):
-        conn = User.connect_to_database()
-        cursor = None
-        try:
-            cursor = conn.cursor()
-            cursor.execute("UPDATE users SET password = %s WHERE username = %s", (new_password, username))
-            conn.commit()
-        except psycopg2.Error as e:
-            logging.error(f"Error updating user password: {e}")
-        finally:
-            if cursor:
-                cursor.close()
-            conn.close()
+    def update_user_password(self, username, new_password):
+        if not self.validate_password(new_password):
+            logging.error("password must be more than 5 characters long and include letters, numbers, and symbols.")
+            return
 
-    @staticmethod
-    def delete_user(username):
-        conn = User.connect_to_database()
         cursor = None
         try:
-            cursor = conn.cursor()
-            cursor.execute("DELETE FROM users WHERE username = %s", (username,))
-            conn.commit()
+            cursor = self.conn.cursor()
+            cursor.execute("UPDATE users SET password = %s WHERE username = %s", (new_password, username))
+            self.conn.commit()
         except psycopg2.Error as e:
-            logging.error(f"Error deleting user: {e}")
+            logging.error(f"error updating user password: {e}")
         finally:
             if cursor:
                 cursor.close()
-            conn.close()
+
+    def delete_user(self, username):
+        cursor = None
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute("DELETE FROM users WHERE username = %s", (username,))
+            self.conn.commit()
+        except psycopg2.Error as e:
+            logging.error(f"error deleting user: {e}")
+        finally:
+            if cursor:
+                cursor.close()

@@ -206,6 +206,9 @@ class Mortgage:
             "total_repayment_fortnightly": total_repayment_fortnightly
         }
 
+        if comment:
+            self.add_comment(comment)
+
     def calculate_mortgage_maturity(self):
         details = self.initial_payment_breakdown
         term = self._initial_term
