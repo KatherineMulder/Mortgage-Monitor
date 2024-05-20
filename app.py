@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 import psycopg2
 from user import UserManager
 from mortgage import Mortgage
-from datetime import datetime
+
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "secret key"
