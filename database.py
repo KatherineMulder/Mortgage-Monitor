@@ -12,7 +12,7 @@ def create_database():
         password="admin123",
         host="localhost",
         port="5432"
-    )z
+    )
     default_conn.autocommit = True
     default_cursor = default_conn.cursor()
 
@@ -47,28 +47,32 @@ def create_database():
 
     # create mortgages table
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS mortgages (
-            mortgage_id SERIAL PRIMARY KEY,
-            user_id INTEGER REFERENCES users(user_id),
-            principal FLOAT NOT NULL,
-            interest FLOAT NOT NULL,
-            term INTEGER NOT NULL,
-            extra_costs FLOAT NOT NULL,
-            deposit FLOAT NOT NULL,
-            start_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
+         CREATE TABLE IF NOT EXISTS mortgages (
+             mortgage_id SERIAL PRIMARY KEY,
+             user_id INTEGER REFERENCES users(user_id),
+             mortgage_name VARCHAR(100) NOT NULL,
+             principal FLOAT NOT NULL,
+             interest FLOAT NOT NULL,
+             term INTEGER NOT NULL,
+             extra_costs FLOAT NOT NULL,
+             deposit FLOAT NOT NULL,
+             payment_override_enabled BOOLEAN,
+             monthly_payment_override FLOAT,
+             fortnightly_payment_override FLOAT,
+             start_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+         )
+     """)
 
     # create transactions table
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS transactions (
-            transaction_id SERIAL PRIMARY KEY,
-            mortgage_id INTEGER REFERENCES mortgages(mortgage_id),
-            transaction_type VARCHAR(50) NOT NULL,
-            amount FLOAT NOT NULL,
-            transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
+           CREATE TABLE IF NOT EXISTS comments (
+               comment_id SERIAL PRIMARY KEY,
+               mortgage_id INTEGER REFERENCES mortgages(mortgage_id),
+               user_id INTEGER REFERENCES users(user_id),
+               comment TEXT NOT NULL,
+               comment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+           )
+       """)
 
     # create comments table
     cursor.execute("""

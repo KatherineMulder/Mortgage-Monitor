@@ -1,36 +1,38 @@
 # Change Request
 
 ## Title
-Entire layout for displaying the main page.
+Redesign of Main Page Layout
 
 ## Requester Information
 - **Name:** Katherine Mulder
 
 ## Date
-14/05/2024
+20/05/2024
 
 ## Change Description
+This request involves making the data display simpler by removing complex number displays and showing the information in a way that is easier to understand.
 
 
 ## Scope
-This change request focuses on updating the appearance and layout of our web application and programming class structure. It involves rearranging elements like menus, page structures, colors, fonts, and overall design to enhance the user experience without altering functionality.
+The focus of this change request is to update the appearance and layout of our web application and programming class structure. This involves rearranging elements such as menus, page structures, colors, fonts, and overall design to enhance the user experience without altering the application's functionality.
 
 ## Proposed Solution
-- Rearranging and resizing elements for better usability.
-- Ensuring the design looks good.
-- Updating style and code files to reflect the changes.
+- **Rearrange and resize elements** for improved usability and navigation.
+- **Update style and code files** to reflect the new design.
+- **Simplify data presentation** by eliminating complex number displays and using more intuitive formats.
+- **Enhance visual appeal** by updating colors, fonts, and overall design.
 
 ## Rationale
-- Make the app easier to use.
-- Improve its visual appeal.
-- Improve clean code.
-- Keep up with current design standards.
+- **Ease of use:** Simplified layout makes the app more intuitive and user-friendly.
+- **Visual appeal:** Modern design standards improve the look and feel of the application.
+- **Code quality:** Clean, well-organized code supports maintainability and scalability.
+- **User engagement:** A visually appealing and easy-to-use app encourages user interaction and satisfaction.
 
 ## Impact Assessment
-- As a junior developer, there is a risk that I may encounter challenges in implementing the changes, which could impact the project's progress and result in delays. This may lead to the client not receiving the ideal solution within the expected timeframe.
-- The proposed changes may require more time for implementation due to the need for additional development and testing efforts.
-- Users may need a bit of guidance.
-- It will need to establish a process for gathering feedback from users
-after implementation to identify any impacts or issues.
+- **Development Challenges:** As a junior developer, I may encounter challenges in implementing the changes, potentially causing delays and affecting project timelines.
+- **Implementation Time:** Additional development and testing efforts may extend the implementation timeline.
+- **User Guidance:** Users may need guidance to navigate the new layout initially.
+- **Feedback Process:** Establishing a feedback mechanism post-implementation to gather user input and address any issues.
 
 ## Attachments
+![change_index.png](change_index.png)

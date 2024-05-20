@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import List, Optional, Dict
-import math
+
 
 class Mortgage:
     def __init__(self,
@@ -367,6 +367,9 @@ class Mortgage:
 
     def get_comments(self):
         return self._comments
+
+    def get_initial_payment_breakdown(self):
+        return self.initial_payment_breakdown
 
     def to_dict(self):
         return {

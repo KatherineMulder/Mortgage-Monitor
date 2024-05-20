@@ -15,6 +15,7 @@
                     <h1 class="text-center">Calculate Mortgage</h1>
                     <p class="text-left text-secondary ">After calculating your estimated payment, you can input an override amount, provided it is higher than the estimated repayment. Once you're satisfied with your entries, confirm the mortgage, and your details will be displayed on the main page.</p>
                     <form id="mortgageForm" action="{{ url_for('new_mortgage') }}" method="POST">
+                        <input type="hidden" name="action" value="calculate">
                         <div class="mb-3">
                             <label for="mortgage_name" class="form-label">Mortgage Name:</label>
                             <input type="text" class="form-control" id="mortgage_name" name="mortgage_name" required>
@@ -43,7 +44,10 @@
                             <label for="comment" class="form-label">Comment:</label>
                             <textarea class="form-control" id="comment" name="comment"></textarea>
                         </div>
-                        <button type="submit" class="btn btn-primary mx-auto d-block">Calculate</button>
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-secondary" onclick="clearForm()">Clear</button>
+                            <button type="submit" class="btn btn-primary" onclick="document.getElementById('mortgageForm').action.value='calculate'">Calculate</button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -78,7 +82,8 @@
                             {% endfor %}
                         {% endif %}
                         <p class="text-danger p-3 mb-2 bg-danger text-white"> NOTE: The override amount must be higher than the estimated repayment.</p>
-                        <form action="{{ url_for('new_mortgage') }}" method="POST">
+                        <form id="overrideForm" action="{{ url_for('new_mortgage') }}" method="POST">
+                            <input type="hidden" name="action" value="save_mortgage">
                             <input type="hidden" name="mortgage_name" value="{{ mortgage_name }}">
                             <input type="hidden" name="principal" value="{{ principal }}">
                             <input type="hidden" name="interest" value="{{ interest }}">
@@ -98,8 +103,11 @@
                                 <label for="fortnightly_payment_override" class="form-label">Fortnightly Payment Override ($):</label>
                                 <input type="number" class="form-control" id="fortnightly_payment_override" name="fortnightly_payment_override" step="0.01" {% if not payment_override_enabled %} disabled {% endif %} value="{{ fortnightly_payment_override }}">
                             </div>
-                            <button type="submit" name="recalculate" class="btn btn-primary mx-auto d-block">Recalculate with Override</button>
-                            <button type="submit" class="btn btn-success mx-auto d-block mt-2">Save Mortgage</button>
+                            <div class="d-flex justify-content-between">
+                                <button type="button" class="btn btn-secondary" onclick="clearOverrideForm()">Clear Override</button>
+                                <button type="submit" name="action" value="recalculate" class="btn btn-secondary">Recalculate with Override</button>
+                                <button type="submit" name="action" value="save_mortgage" class="btn btn-primary">Save Mortgage</button>
+                            </div>
                         </form>
                     {% endif %}
                 </div>
@@ -114,6 +122,12 @@
                 item.innerHTML = "";
             });
         }
+
+        function clearOverrideForm() {
+            document.getElementById("overrideForm").reset();
+            toggleOverrideFields({checked: false});
+        }
+
         function toggleOverrideFields(checkbox) {
             var monthlyOverrideField = document.getElementById("monthly_payment_override");
             var fortnightlyOverrideField = document.getElementById("fortnightly_payment_override");

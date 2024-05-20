@@ -5,6 +5,12 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .scrollable-table {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
 </head>
 <body class="bg-white">
     <nav class="navbar navbar-light bg-light">
@@ -22,63 +28,252 @@
         </div>
     </nav>
 
-     <div class="container mt-4">
+    <div class="container mt-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <div class="dropdown">
-                <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    Displaying Mortgage
-                </button>
-                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                    {% for mortgage_detail in mortgage_details %}
-                        <a class="dropdown-item" href="#" data-id="{{ mortgage_detail['mortgage_id'] }}">{{ mortgage_detail['mortgage_name'] }}</a>
-                    {% endfor %}
-                </div>
-            </div>
-            <a href="{{ url_for('new_mortgage') }}" class="btn btn-secondary">Add New Mortgage</a>
-            <a href="{{ url_for('update_mortgage') }}" class="btn btn-secondary me-2">Update Mortgage</a>
-            <a href="{{ url_for('remove_mortgage') }}" class="btn btn-danger">Remove Mortgage</a>
+            <a href="{{ url_for('new_mortgage') }}" class="btn btn-primary">Add New Mortgage</a>
         </div>
 
-       <div class="row">
-            {% for mortgage_detail in mortgage_details %}
-                <div class="col-md-12 mb-3 mortgage-card" id="mortgage-{{ mortgage_detail['mortgage_id'] }}" style="display: none;">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h5 class="card-title">Summary Overview</h5>
-                            <p class="card-text">Mortgage Number: {{ mortgage_detail['mortgage_id'] }}</p>
-                            <p class="card-text">Total Principal Amount: {{ '%.2f' | format(mortgage_detail['initial_principal']) }}</p>
-                            <p class="card-text">Interest Rate: {{ '%.2f' | format(mortgage_detail['initial_interest']) }}</p>
-                            <p class="card-text">Loan Term (years): {{ mortgage_detail['initial_term'] }}</p>
-                            <p class="card-text">Deposit: {{ '%.2f' | format(mortgage_detail['deposit']) }}</p>
-                            <p class="card-text">Extra Costs: {{ '%.2f' | format(mortgage_detail['extra_costs']) }}</p>
+        <div class="container py-5">
+            <h1 class="text-center">Mortgage Monitor</h1>
+            {% if error_message %}
+                <div class="alert alert-danger">{{ error_message }}</div>
+            {% endif %}
 
-                            <h5 class="card-title mt-4">Payment Breakdown</h5>
-                            <p class="card-text">Monthly Interest: {{ '%.2f' | format(mortgage_detail['initial_payment_breakdown']['initial_interest_monthly']) }}</p>
-                            <p class="card-text">Monthly Principal: {{ '%.2f' | format(mortgage_detail['initial_payment_breakdown']['initial_principal_monthly']) }}</p>
-                            <p class="card-text">Monthly Estimated Repayment: {{ '%.2f' | format(mortgage_detail['initial_payment_breakdown']['estimated_repayment_monthly']) }}</p>
-                            <p class="card-text">Fortnightly Interest: {{ '%.2f' | format(mortgage_detail['initial_payment_breakdown']['initial_interest_fortnightly']) }}</p>
-                            <p class="card-text">Fortnightly Principal: {{ '%.2f' | format(mortgage_detail['initial_payment_breakdown']['initial_principal_fortnightly']) }}</p>
-                            <p class="card-text">Fortnightly Estimated Repayment: {{ '%.2f' | format(mortgage_detail['initial_payment_breakdown']['estimated_repayment_fortnightly']) }}</p>
-                            <h5 class="card-title mt-4">Mortgage Maturity</h5>
-                            {% for key, value in mortgage_detail['mortgage_maturity']['monthly'].items() %}
-                                <p class="card-text">{{ key.replace('_', ' ').capitalize() }}: {{ '%.2f' | format(value) }}</p>
-                            {% endfor %}
+            <!-- dropdown  -->
+            <div class="mb-3">
+                <label for="mortgageSelect" class="form-label">Select Mortgage:</label>
+                <select class="form-select" id="mortgageSelect" onchange="displaySelectedMortgage()">
+                    <option value="" selected>Select a mortgage</option>
+                    {% for mortgage in mortgage_details %}
+                        <option value="{{ mortgage.mortgage_name }}">{{ mortgage.mortgage_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-                            <h5 class="card-title mt-4">Comments</h5>
-                            {% for comment in mortgage_detail['comments'] %}
-                                <p class="card-text">{{ comment }}</p>
-                            {% endfor %}
+            <!-- mortgage details -->
+            {% for mortgage in mortgage_details %}
+                <div class="card mb-3 mortgage-details" id="mortgage-{{ mortgage.mortgage_name }}" style="display:none;">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ mortgage.mortgage_name }}</h5>
+
+                        <!-- initial payment -->
+                        <h5>Initial Payment Breakdown</h5>
+                        <div class="table-responsive scrollable-table">
+                            <table class="table table-striped table-bordered table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Initial Breakdown</th>
+                                        <th>Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Mortgage Name</strong></td>
+                                        <td><strong>{{ mortgage.mortgage_name }}</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Initial Principal</strong></td>
+                                        <td><strong>${{ "{:,.2f}".format(mortgage.initial_principal) }}</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Initial Interest</strong></td>
+                                        <td><strong>{{ mortgage.initial_interest }}%</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Initial Term</strong></td>
+                                        <td><strong>{{ mortgage.initial_term }} years</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Initial Deposit</td>
+                                        <td>${{ "{:,.2f}".format(mortgage.deposit) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Initial Extra Costs</td>
+                                        <td>${{ "{:,.2f}".format(mortgage.extra_costs) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Total Amount Borrowed</strong></td>
+                                        <td><strong>${{ "{:,.2f}".format(mortgage.initial_payment_breakdown['total_amount_borrowed']) }}</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Monthly Estimated Repayment</strong></td>
+                                        <td><strong>${{ "{:,.2f}".format(mortgage.initial_payment_breakdown['estimated_repayment_monthly']) }}</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Monthly Interest</td>
+                                        <td>${{ "{:,.2f}".format(mortgage.initial_payment_breakdown['initial_interest_monthly']) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Monthly Principal</td>
+                                        <td>${{ "{:,.2f}".format(mortgage.initial_payment_breakdown['initial_principal_monthly']) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Monthly Extra</td>
+                                        <td>${{ "{:,.2f}".format(mortgage.initial_payment_breakdown['initial_extra_monthly']) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Monthly Total Repayment</strong></td>
+                                        <td><strong>${{ "{:,.2f}".format(mortgage.initial_payment_breakdown['total_repayment_monthly']) }}</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Fortnightly Estimated Repayment</td>
+                                        <td>${{ "{:,.2f}".format(mortgage.initial_payment_breakdown['estimated_repayment_fortnightly']) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Fortnightly Interest</td>
+                                        <td>${{ "{:,.2f}".format(mortgage.initial_payment_breakdown['initial_interest_fortnightly']) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Fortnightly Principal</td>
+                                        <td>${{ "{:,.2f}".format(mortgage.initial_payment_breakdown['initial_principal_fortnightly']) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Fortnightly Extra</td>
+                                        <td>${{ "{:,.2f}".format(mortgage.initial_payment_breakdown['initial_extra_fortnightly']) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Fortnightly Total Repayment</td>
+                                        <td>${{ "{:,.2f}".format(mortgage.initial_payment_breakdown['total_repayment_fortnightly']) }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- maturity Details - monthly -->
+                        <h5>Mortgage Maturity Details - Monthly</h5>
+                        <div class="table-responsive scrollable-table">
+                            <table class="table table-striped table-bordered table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Maturity Detail</th>
+                                        <th>Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Full Term Payments</td>
+                                        <td>{{ mortgage.mortgage_maturity['monthly']['full_term_payments'] }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Interest Over Full Term</td>
+                                        <td>${{ "{:,.2f}".format(mortgage.mortgage_maturity['monthly']['interest_over_full_term']) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Principal + Interest Full Term</td>
+                                        <td>${{ "{:,.2f}".format(mortgage.mortgage_maturity['monthly']['principal_plus_interest_full_term']) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Total Interest Paid</td>
+                                        <td>${{ "{:,.2f}".format(mortgage.mortgage_maturity['monthly']['total_interest_paid']) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Total Repayment</td>
+                                        <td>${{ "{:,.2f}".format(mortgage.mortgage_maturity['monthly']['total_repayment']) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Total Interest Saved</td>
+                                        <td>${{ "{:,.2f}".format(mortgage.mortgage_maturity['monthly']['total_interest_saved']) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Months to Repay</td>
+                                        <td>{{ mortgage.mortgage_maturity['monthly']['months_to_repay'] }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- maturity fortnightly -->
+                        <h5>Mortgage Maturity Details - Fortnightly</h5>
+                        <div class="table-responsive scrollable-table">
+                            <table class="table table-striped table-bordered table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Maturity Detail</th>
+                                        <th>Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Full Term Payments</td>
+                                        <td>{{ mortgage.mortgage_maturity['fortnightly']['full_term_payments'] }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Interest Over Full Term</td>
+                                        <td>${{ "{:,.2f}".format(mortgage.mortgage_maturity['fortnightly']['interest_over_full_term']) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Principal + Interest Full Term</td>
+                                        <td>${{ "{:,.2f}".format(mortgage.mortgage_maturity['fortnightly']['principal_plus_interest_full_term']) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Total Interest Paid</td>
+                                        <td>${{ "{:,.2f}".format(mortgage.mortgage_maturity['fortnightly']['total_interest_paid']) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Total Repayment</td>
+                                        <td>${{ "{:,.2f}".format(mortgage.mortgage_maturity['fortnightly']['total_repayment']) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Total Interest Saved</td>
+                                        <td>${{ "{:,.2f}".format(mortgage.mortgage_maturity['fortnightly']['total_interest_saved']) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Fortnights to Repay</td>
+                                        <td>{{ mortgage.mortgage_maturity['fortnightly']['fortnights_to_repay'] }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <hr>
+                        <p class="card-text"><strong>Comments:</strong></p>
+                        {% for comment in mortgage.comments %}
+                            <p class="card-text">{{ comment }}</p>
+                        {% endfor %}
+                        <strong>Created At:</strong> {{ mortgage.created_at.strftime('%B %d, %Y %I:%M %p') }}
+
+                        <!-- amortization -->
+                        <hr>
+                        <h5>Amortization Schedule</h5>
+                        <div class="table-responsive scrollable-table">
+                            <table class="table table-striped table-bordered table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Period</th>
+                                        <th>Balance</th>
+                                        <th>Interest</th>
+                                        <th>Principal</th>
+                                        <th>Extra</th>
+                                        <th>Total Payment</th>
+                                        <th>New Balance</th>
+                                        <th>Accumulated Interest</th>
+                                        <th>Accumulated Principal Payment</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in mortgage.amortization_schedule['monthly'] %}
+                                        <tr>
+                                            <td>{{ row.Period }}</td>
+                                            <td>${{ "{:,.2f}".format(row.Balance) }}</td>
+                                            <td>${{ "{:,.2f}".format(row.Interest) }}</td>
+                                            <td>${{ "{:,.2f}".format(row.Principal) }}</td>
+                                            <td>${{ "{:,.2f}".format(row.Extra) }}</td>
+                                            <td>${{ "{:,.2f}".format(row['Total Payment']) }}</td>
+                                            <td>${{ "{:,.2f}".format(row['New Balance']) }}</td>
+                                            <td>${{ "{:,.2f}".format(row['Accumulated Interest']) }}</td>
+                                            <td>${{ "{:,.2f}".format(row['Accumulated Principal Payment']) }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
             {% endfor %}
         </div>
-        {% if error_message %}
-            <div class="alert alert-danger mt-3">{{ error_message }}</div>
-        {% endif %}
     </div>
 
-    <!-- update password -->
+    <!-- Password Update Modal -->
     <div class="modal fade" id="updatePasswordModal" tabindex="-1" aria-labelledby="updatePasswordModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -88,27 +283,11 @@
                 </div>
                 <div class="modal-body">
                     <form id="updatePasswordForm">
-                        <label for="new_password">New Password:</label><br>
-                        <input type="password" id="new_password" name="new_password" class="form-control" required><br><br>
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="newPassword" name="new_password" required>
+                        </div>
                         <button type="submit" class="btn btn-primary">Update Password</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- remove account -->
-    <div class="modal fade" id="removeAccountModal" tabindex="-1" aria-labelledby="removeAccountModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="removeAccountModalLabel">Remove Account</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="removeAccountForm">
-                        <p>Are you sure you want to remove your account?</p>
-                        <button type="submit" class="btn btn-danger">Remove Account</button>
                     </form>
                 </div>
             </div>
@@ -119,10 +298,6 @@
         $(document).ready(function() {
             $("#updatePasswordBtn").click(function() {
                 $("#updatePasswordModal").modal('show');
-            });
-
-            $("#removeAccountBtn").click(function() {
-                $("#removeAccountModal").modal('show');
             });
 
             $("#updatePasswordForm").submit(function(event) {
@@ -141,6 +316,10 @@
                 });
             });
 
+            $("#removeAccountBtn").click(function() {
+                $("#removeAccountModal").modal('show');
+            });
+
             $("#removeAccountForm").submit(function(event) {
                 event.preventDefault();
                 if (confirm("Are you sure you want to remove your account?")) {
@@ -149,7 +328,7 @@
                         url: "{{ url_for('remove_user') }}",
                         success: function(response) {
                             alert(response.message);
-                            window.location.href = "{{ url_for('index') }}";
+                            window.location.href = "{{ url_for('login') }}";
                         },
                         error: function(xhr, status, error) {
                             alert("Error: " + xhr.responseText);
@@ -159,14 +338,13 @@
             });
         });
 
-         $(document).ready(function() {
-            $('.dropdown-item').click(function() {
-                var mortgageId = $(this).data('id');
-                $('.mortgage-card').hide();
-                $('#mortgage-' + mortgageId).show();
-            });
-        });
-
+        function displaySelectedMortgage() {
+            var selectedMortgage = $("#mortgageSelect").val();
+            $(".mortgage-details").hide();
+            if (selectedMortgage) {
+                $("#mortgage-" + selectedMortgage).show();
+            }
+        }
     </script>
 </body>
 </html>

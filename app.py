@@ -1,12 +1,14 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 import psycopg2
 from user import UserManager
 from mortgage import Mortgage
+from datetime import datetime
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "secret key"
 
 user_manager = UserManager()
+
 
 def connect_to_database():
     conn = psycopg2.connect(
@@ -19,9 +21,11 @@ def connect_to_database():
     conn.autocommit = True
     return conn
 
+
 @app.route("/", methods=["GET", "POST"])
 def root():
     return redirect(url_for("login"))
+
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -74,6 +78,7 @@ def signup():
 
     return render_template("signup.html")
 
+
 @app.route("/index")
 def index():
     if 'username' not in session:
@@ -87,51 +92,43 @@ def index():
         conn = connect_to_database()
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT mortgage_id, principal, interest, term, extra_costs, deposit 
+            SELECT mortgage_id, mortgage_name, principal, interest, term, extra_costs, deposit, start_date, 
+                   payment_override_enabled, monthly_payment_override, fortnightly_payment_override 
             FROM mortgages 
             WHERE user_id = (SELECT user_id FROM users WHERE username = %s)
         """, (username,))
         mortgages = cursor.fetchall()
 
         for mortgage in mortgages:
-            mortgage_id, principal, interest, term, extra_costs, deposit = mortgage
+            mortgage_id, mortgage_name, principal, interest, term, extra_costs, deposit, start_date, payment_override_enabled, monthly_payment_override, fortnightly_payment_override = mortgage
             mortgage_obj = Mortgage()
-            mortgage_obj.gather_inputs(principal, interest, term, extra_costs, deposit, False, None, None)
+            mortgage_obj.gather_inputs(principal, interest, term, extra_costs, deposit, payment_override_enabled, monthly_payment_override, fortnightly_payment_override)
             mortgage_obj.calculate_initial_payment_breakdown()
             mortgage_obj.calculate_mortgage_maturity()
             amortization_schedule = mortgage_obj.amortization_table()
 
-            cursor.execute("""
-                SELECT comment 
-                FROM comments 
-                WHERE mortgage_id = %s
-                ORDER BY comment_date
-            """, (mortgage_id,))
+            cursor.execute("SELECT comment FROM comments WHERE mortgage_id = %s", (mortgage_id,))
             comments = cursor.fetchall()
+            comments = [comment[0] for comment in comments]
 
-            for comment, in comments:
-                mortgage_obj.add_comment(comment)
-
-            mortgage_detail = {
-                'mortgage_id': mortgage_id,
-                'initial_principal': mortgage_obj._initial_principal,
-                'initial_interest': mortgage_obj._initial_interest,
-                'initial_term': mortgage_obj._initial_term,
-                'extra_costs': mortgage_obj._extra_costs,
-                'deposit': mortgage_obj._deposit,
-                'initial_payment_breakdown': mortgage_obj.initial_payment_breakdown,
+            mortgage_details.append({
+                'mortgage_name': mortgage_name,
+                'initial_principal': principal,
+                'initial_interest': interest,
+                'initial_term': term,
+                'extra_costs': extra_costs,
+                'deposit': deposit,
+                'initial_payment_breakdown': mortgage_obj.get_initial_payment_breakdown(),
                 'mortgage_maturity': mortgage_obj.mortgage_maturity,
-                'amortization_schedule': mortgage_obj.amortization_schedule,
-                'comments': mortgage_obj._comments
-            }
-
-            mortgage_details.append(mortgage_detail)
-
-        cursor.close()
-        conn.close()
+                'amortization_schedule': amortization_schedule,
+                'comments': comments,
+                'created_at': start_date
+            })
     except Exception as e:
         error_message = f"An error occurred: {str(e)}"
-        print(error_message)
+    finally:
+        cursor.close()
+        conn.close()
 
     return render_template('index.html', username=username, mortgage_details=mortgage_details, error_message=error_message)
 
@@ -154,6 +151,7 @@ def new_mortgage():
     comment = None
 
     if request.method == 'POST':
+        action = request.form.get('action')
         mortgage_name = request.form.get("mortgage_name")
         principal = float(request.form.get("principal"))
         interest = float(request.form.get("interest"))
@@ -162,12 +160,8 @@ def new_mortgage():
         deposit = float(request.form.get("deposit")) if request.form.get("deposit") else 0.0
 
         payment_override_enabled = 'payment_override_enabled' in request.form
-        monthly_payment_override = float(
-            request.form.get("monthly_payment_override")) if payment_override_enabled and request.form.get(
-            "monthly_payment_override") else None
-        fortnightly_payment_override = float(
-            request.form.get("fortnightly_payment_override")) if payment_override_enabled and request.form.get(
-            "fortnightly_payment_override") else None
+        monthly_payment_override = float(request.form.get("monthly_payment_override")) if payment_override_enabled and request.form.get("monthly_payment_override") else None
+        fortnightly_payment_override = float(request.form.get("fortnightly_payment_override")) if payment_override_enabled and request.form.get("fortnightly_payment_override") else None
         comment = request.form.get("comment")
 
         mortgage = Mortgage()
@@ -184,10 +178,6 @@ def new_mortgage():
         mortgage.calculate_initial_payment_breakdown()
         mortgage.calculate_mortgage_maturity()
 
-        if comment:
-            mortgage.add_comment(comment)
-
-
         formatted_results = {
             'initial_payment_breakdown': {key: f"{value:,.2f}" for key, value in mortgage.initial_payment_breakdown.items()},
             'mortgage_maturity': mortgage.mortgage_maturity,
@@ -196,62 +186,52 @@ def new_mortgage():
 
         results = formatted_results
 
-        if 'recalculate' in request.form:
+        if action == 'calculate':
             return render_template('new_mortgage.html', results=results, mortgage_name=mortgage_name, principal=principal,
                                    interest=interest, term=term, extra_costs=extra_costs, deposit=deposit,
                                    payment_override_enabled=payment_override_enabled,
                                    monthly_payment_override=monthly_payment_override,
                                    fortnightly_payment_override=fortnightly_payment_override, comment=comment)
 
+        elif action == 'save_mortgage':
+            if 'username' in session:
+                username = session['username']
+                conn = connect_to_database()
+                cursor = conn.cursor()
+                try:
+                    cursor.execute("SELECT user_id FROM users WHERE username = %s", (username,))
+                    user_id = cursor.fetchone()[0]
+
+                    cursor.execute("""
+                        INSERT INTO mortgages (user_id, mortgage_name, principal, interest, term, extra_costs, deposit, payment_override_enabled, monthly_payment_override, fortnightly_payment_override)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING mortgage_id
+                    """, (user_id, mortgage_name, principal, interest, term, extra_costs, deposit, payment_override_enabled,
+                          monthly_payment_override, fortnightly_payment_override))
+
+                    mortgage_id = cursor.fetchone()[0]
+
+                    if comment:
+                        cursor.execute("""
+                            INSERT INTO comments (mortgage_id, user_id, comment)
+                            VALUES (%s, %s, %s)
+                        """, (mortgage_id, user_id, comment))
+
+                    conn.commit()
+                    flash('Mortgage saved successfully!', 'success')
+                except Exception as e:
+                    conn.rollback()
+                    flash(f"An error occurred: {str(e)}", 'danger')
+                finally:
+                    cursor.close()
+                    conn.close()
+
+                return redirect(url_for('index'))
+
     return render_template('new_mortgage.html', results=results, mortgage_name=mortgage_name, principal=principal,
                            interest=interest, term=term, extra_costs=extra_costs, deposit=deposit,
                            payment_override_enabled=payment_override_enabled,
                            monthly_payment_override=monthly_payment_override,
                            fortnightly_payment_override=fortnightly_payment_override, comment=comment)
-
-
-
-@app.route("/save_mortgage", methods=["POST"])
-def save_mortgage():
-    if 'username' not in session:
-        return redirect(url_for('login'))
-
-    username = session['username']
-    mortgage_name = request.form["mortgage_name"]
-    principal = float(request.form["principal"])
-    interest = float(request.form["interest"])
-    term = int(request.form["term"])
-    extra_costs = float(request.form["extra_costs"]) if request.form["extra_costs"] else 0.0
-    deposit = float(request.form["deposit"]) if request.form["deposit"] else 0.0
-    payment_override_enabled = request.form["payment_override_enabled"] == 'True'
-    monthly_payment_override = float(request.form["monthly_payment_override"]) if payment_override_enabled and \
-                                                                                  request.form[
-                                                                                      "monthly_payment_override"] else None
-    fortnightly_payment_override = float(request.form["fortnightly_payment_override"]) if payment_override_enabled and \
-                                                                                          request.form[
-                                                                                              "fortnightly_payment_override"] else None
-    comment = request.form["comment"]
-
-    mortgage = Mortgage()
-    mortgage.gather_inputs(
-        principal=principal,
-        interest=interest,
-        term=term,
-        extra_costs=extra_costs,
-        deposit=deposit,
-        payment_override_enabled=payment_override_enabled,
-        monthly_payment_override=monthly_payment_override,
-        fortnightly_payment_override=fortnightly_payment_override
-    )
-    mortgage.calculate_initial_payment_breakdown()
-    mortgage.calculate_mortgage_maturity()
-
-    if comment:
-        mortgage.add_comment(comment)
-
-    # Save the mortgage object in your database or file system here
-
-    return redirect(url_for('index'))  # Adjust according to your index page logic
 
 
 @app.route("/update_mortgage")
@@ -267,7 +247,6 @@ def remove_mortgage():
         return redirect(url_for('login'))
     return render_template('remove_mortgage.html')
 
-
 @app.route("/update_password", methods=['POST'])
 def update_password():
     if 'username' not in session:
@@ -279,7 +258,6 @@ def update_password():
     else:
         return jsonify({'message': 'Please must include numbers and symbol .'}), 400
 
-
 @app.route("/remove_user", methods=['POST'])
 def remove_user():
     if 'username' not in session:
@@ -288,12 +266,10 @@ def remove_user():
     session.pop('username', None)
     return jsonify({'message': 'user removed successfully.'})
 
-
 @app.route("/logout")
 def logout():
     session.pop('username', None)
     return redirect(url_for('login'))
-
 
 if __name__ == "__main__":
     app.run(debug=True)
