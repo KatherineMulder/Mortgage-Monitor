@@ -135,21 +135,40 @@ def index():
 
     return render_template('index.html', username=username, mortgage_details=mortgage_details, error_message=error_message)
 
+
 @app.route("/new_mortgage", methods=["GET", "POST"])
 def new_mortgage():
     if 'username' not in session:
         return redirect(url_for('login'))
 
-    username = session['username']
+    results = None
+    mortgage_name = None
+    principal = None
+    interest = None
+    term = None
+    extra_costs = None
+    deposit = None
+    payment_override_enabled = None
+    monthly_payment_override = None
+    fortnightly_payment_override = None
+    comment = None
+
     if request.method == 'POST':
-        principal = float(request.form["principal"])
-        interest = float(request.form["interest"])
-        term = int(request.form["term"])
-        extra_costs = float(request.form["extra_costs"])
-        deposit = float(request.form["deposit"])
+        mortgage_name = request.form.get("mortgage_name")
+        principal = float(request.form.get("principal"))
+        interest = float(request.form.get("interest"))
+        term = int(request.form.get("term"))
+        extra_costs = float(request.form.get("extra_costs")) if request.form.get("extra_costs") else 0.0
+        deposit = float(request.form.get("deposit")) if request.form.get("deposit") else 0.0
+
         payment_override_enabled = 'payment_override_enabled' in request.form
-        monthly_payment_override = float(request.form["monthly_payment_override"]) if payment_override_enabled else None
-        fortnightly_payment_override = float(request.form["fortnightly_payment_override"]) if payment_override_enabled else None
+        monthly_payment_override = float(
+            request.form.get("monthly_payment_override")) if payment_override_enabled and request.form.get(
+            "monthly_payment_override") else None
+        fortnightly_payment_override = float(
+            request.form.get("fortnightly_payment_override")) if payment_override_enabled and request.form.get(
+            "fortnightly_payment_override") else None
+        comment = request.form.get("comment")
 
         mortgage = Mortgage()
         mortgage.gather_inputs(
@@ -163,34 +182,34 @@ def new_mortgage():
             fortnightly_payment_override=fortnightly_payment_override
         )
         mortgage.calculate_initial_payment_breakdown()
+        mortgage.calculate_mortgage_maturity()
 
-        initial_payment_breakdown = mortgage.initial_payment_breakdown
-        monthly_interest = round(initial_payment_breakdown["initial_interest_monthly"], 2)
-        monthly_principal_repayment = round(initial_payment_breakdown["initial_principal_monthly"], 2)
-        monthly_repayment = round(initial_payment_breakdown["estimated_repayment_monthly"], 2)
-        fortnightly_interest = round(initial_payment_breakdown["initial_interest_fortnightly"], 2)
-        fortnightly_principal_repayment = round(initial_payment_breakdown["initial_principal_fortnightly"], 2)
-        fortnightly_repayment = round(initial_payment_breakdown["estimated_repayment_fortnightly"], 2)
+        if comment:
+            mortgage.add_comment(comment)
 
-        return render_template(
-            'new_mortgage.html',
-            principal=principal,
-            interest=interest,
-            term=term,
-            extra_costs=extra_costs,
-            deposit=deposit,
-            payment_override_enabled=payment_override_enabled,
-            monthly_payment_override=monthly_payment_override,
-            fortnightly_payment_override=fortnightly_payment_override,
-            monthly_interest=monthly_interest,
-            monthly_principal_repayment=monthly_principal_repayment,
-            monthly_repayment=monthly_repayment,
-            fortnightly_interest=fortnightly_interest,
-            fortnightly_principal_repayment=fortnightly_principal_repayment,
-            fortnightly_repayment=fortnightly_repayment
-        )
 
-    return render_template('new_mortgage.html')
+        formatted_results = {
+            'initial_payment_breakdown': {key: f"{value:,.2f}" for key, value in mortgage.initial_payment_breakdown.items()},
+            'mortgage_maturity': mortgage.mortgage_maturity,
+            'comments': mortgage.get_comments()
+        }
+
+        results = formatted_results
+
+        if 'recalculate' in request.form:
+            return render_template('new_mortgage.html', results=results, mortgage_name=mortgage_name, principal=principal,
+                                   interest=interest, term=term, extra_costs=extra_costs, deposit=deposit,
+                                   payment_override_enabled=payment_override_enabled,
+                                   monthly_payment_override=monthly_payment_override,
+                                   fortnightly_payment_override=fortnightly_payment_override, comment=comment)
+
+    return render_template('new_mortgage.html', results=results, mortgage_name=mortgage_name, principal=principal,
+                           interest=interest, term=term, extra_costs=extra_costs, deposit=deposit,
+                           payment_override_enabled=payment_override_enabled,
+                           monthly_payment_override=monthly_payment_override,
+                           fortnightly_payment_override=fortnightly_payment_override, comment=comment)
+
+
 
 @app.route("/save_mortgage", methods=["POST"])
 def save_mortgage():
@@ -198,26 +217,42 @@ def save_mortgage():
         return redirect(url_for('login'))
 
     username = session['username']
+    mortgage_name = request.form["mortgage_name"]
     principal = float(request.form["principal"])
     interest = float(request.form["interest"])
     term = int(request.form["term"])
-    extra_costs = float(request.form["extra_costs"])
-    deposit = float(request.form["deposit"])
+    extra_costs = float(request.form["extra_costs"]) if request.form["extra_costs"] else 0.0
+    deposit = float(request.form["deposit"]) if request.form["deposit"] else 0.0
+    payment_override_enabled = request.form["payment_override_enabled"] == 'True'
+    monthly_payment_override = float(request.form["monthly_payment_override"]) if payment_override_enabled and \
+                                                                                  request.form[
+                                                                                      "monthly_payment_override"] else None
+    fortnightly_payment_override = float(request.form["fortnightly_payment_override"]) if payment_override_enabled and \
+                                                                                          request.form[
+                                                                                              "fortnightly_payment_override"] else None
+    comment = request.form["comment"]
 
-    try:
-        conn = connect_to_database()
-        cursor = conn.cursor()
-        cursor.execute("""
-            INSERT INTO mortgages (user_id, principal, interest, term, extra_costs, deposit) 
-            VALUES ((SELECT user_id FROM users WHERE username = %s), %s, %s, %s, %s, %s)
-        """, (username, principal, interest, term, extra_costs, deposit))
-        conn.commit()
-        cursor.close()
-        conn.close()
-        return redirect(url_for('index'))
+    mortgage = Mortgage()
+    mortgage.gather_inputs(
+        principal=principal,
+        interest=interest,
+        term=term,
+        extra_costs=extra_costs,
+        deposit=deposit,
+        payment_override_enabled=payment_override_enabled,
+        monthly_payment_override=monthly_payment_override,
+        fortnightly_payment_override=fortnightly_payment_override
+    )
+    mortgage.calculate_initial_payment_breakdown()
+    mortgage.calculate_mortgage_maturity()
 
-    except Exception as e:
-        return f"An error occurred: {str(e)}"
+    if comment:
+        mortgage.add_comment(comment)
+
+    # Save the mortgage object in your database or file system here
+
+    return redirect(url_for('index'))  # Adjust according to your index page logic
+
 
 @app.route("/update_mortgage")
 def update_mortgage():

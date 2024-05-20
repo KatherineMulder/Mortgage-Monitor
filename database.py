@@ -12,7 +12,7 @@ def create_database():
         password="admin123",
         host="localhost",
         port="5432"
-    )
+    )z
     default_conn.autocommit = True
     default_cursor = default_conn.cursor()
 

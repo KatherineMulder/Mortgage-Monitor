@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import List, Optional, Dict
-
+import math
 
 class Mortgage:
     def __init__(self,
@@ -122,11 +122,10 @@ class Mortgage:
             raise ValueError("start date must be a datetime object")
         self._start_date = value
 
-    def gather_inputs(self, principal: float, interest: float, term: int, extra_costs: float, deposit: float,
-                      payment_override_enabled: bool, monthly_payment_override: Optional[float],
-                      fortnightly_payment_override: Optional[float]):
+    def gather_inputs(self, principal, interest, term, extra_costs, deposit, payment_override_enabled,
+                      monthly_payment_override, fortnightly_payment_override):
         self._initial_principal = principal
-        self._initial_interest = interest
+        self._initial_interest = interest / 100
         self._initial_term = term
         self._extra_costs = extra_costs
         self._deposit = deposit
@@ -179,7 +178,7 @@ class Mortgage:
         estimated_repayment_monthly = total_amount_borrowed * (monthly_rate / (1 - (1 + monthly_rate) ** -(term * 12)))
         initial_interest_monthly = total_amount_borrowed * monthly_rate
         initial_principal_monthly = estimated_repayment_monthly - initial_interest_monthly
-        initial_extra_monthly = monthly_payment_override - initial_interest_monthly if payment_override_enabled else 0
+        initial_extra_monthly = monthly_payment_override - estimated_repayment_monthly if payment_override_enabled else 0
         total_repayment_monthly = initial_interest_monthly + initial_principal_monthly + initial_extra_monthly
 
         fortnightly_rate = interest / 26
@@ -187,7 +186,7 @@ class Mortgage:
                 fortnightly_rate / (1 - (1 + fortnightly_rate) ** -(term * 26)))
         initial_interest_fortnightly = total_amount_borrowed * fortnightly_rate
         initial_principal_fortnightly = estimated_repayment_fortnightly - initial_interest_fortnightly
-        initial_extra_fortnightly = fortnightly_payment_override - initial_interest_fortnightly \
+        initial_extra_fortnightly = fortnightly_payment_override - estimated_repayment_fortnightly \
             if payment_override_enabled else 0
         total_repayment_fortnightly = (initial_interest_fortnightly + initial_principal_fortnightly
                                        + initial_extra_fortnightly)
@@ -205,9 +204,6 @@ class Mortgage:
             "initial_extra_fortnightly": initial_extra_fortnightly,
             "total_repayment_fortnightly": total_repayment_fortnightly
         }
-
-        if comment:
-            self.add_comment(comment)
 
     def calculate_mortgage_maturity(self):
         details = self.initial_payment_breakdown
@@ -372,14 +368,30 @@ class Mortgage:
     def get_comments(self):
         return self._comments
 
+    def to_dict(self):
+        return {
+            "mortgage_id": self._mortgage_id,
+            "initial_interest": self._initial_interest,
+            "initial_term": self._initial_term,
+            "initial_principal": self._initial_principal,
+            "deposit": self._deposit,
+            "extra_costs": self._extra_costs,
+            "start_date": self._start_date,
+            "comments": self._comments,
+            "payment_override_enabled": self.payment_override_enabled,
+            "monthly_payment_override": self.monthly_payment_override,
+            "fortnightly_payment_override": self.fortnightly_payment_override,
+            "initial_payment_breakdown": self.initial_payment_breakdown,
+            "mortgage_maturity": self.mortgage_maturity,
+            "amortization_schedule": self.amortization_schedule
+        }
 
 if __name__ == "__main__":
     M = Mortgage()
     try:
-
         M.gather_inputs(
             principal=810000,
-            interest=0.05,
+            interest=5,
             term=20,
             extra_costs=10000,
             deposit=50000,
@@ -388,19 +400,29 @@ if __name__ == "__main__":
             fortnightly_payment_override=3000
         )
 
+        # Initial payment breakdown
         M.calculate_initial_payment_breakdown()
         print("Initial Payment Breakdown:")
-        print("Monthly:", M.initial_payment_breakdown["estimated_repayment_monthly"])
-        print("Fortnightly:", M.initial_payment_breakdown["estimated_repayment_fortnightly"])
-        print("Payment Override Enabled:", M.payment_override_enabled)
-        print("Monthly Payment Override:", M.monthly_payment_override)
-        print("Fortnightly Payment Override:", M.fortnightly_payment_override)
+        print("Total Amount Borrowed:", M.initial_payment_breakdown["total_amount_borrowed"])
+        print("Monthly Estimated Repayment:", M.initial_payment_breakdown["estimated_repayment_monthly"])
+        print("Monthly Interest:", M.initial_payment_breakdown["initial_interest_monthly"])
+        print("Monthly Principal:", M.initial_payment_breakdown["initial_principal_monthly"])
+        print("Monthly Extra:", M.initial_payment_breakdown["initial_extra_monthly"])
+        print("Monthly Total Repayment:", M.initial_payment_breakdown["total_repayment_monthly"])
+        print("Fortnightly Estimated Repayment:", M.initial_payment_breakdown["estimated_repayment_fortnightly"])
+        print("Fortnightly Interest:", M.initial_payment_breakdown["initial_interest_fortnightly"])
+        print("Fortnightly Principal:", M.initial_payment_breakdown["initial_principal_fortnightly"])
+        print("Fortnightly Extra:", M.initial_payment_breakdown["initial_extra_fortnightly"])
+        print("Fortnightly Total Repayment:", M.initial_payment_breakdown["total_repayment_fortnightly"])
         print()
 
         M.calculate_mortgage_maturity()
         print("Mortgage Maturity Details:")
         print("Monthly:")
-        for key, value in M.mortgage_maturity.items():
+        for key, value in M.mortgage_maturity["monthly"].items():
+            print(f"  {key}: {value}")
+        print("Fortnightly:")
+        for key, value in M.mortgage_maturity["fortnightly"].items():
             print(f"  {key}: {value}")
         print()
 
@@ -409,21 +431,22 @@ if __name__ == "__main__":
         for row in amortization_schedule["monthly"][:5]:  # show first 5 data
             print(row)
 
-        # test boom payment
+        # test balloon payment
         M.make_balloon_payment(100000)
-        print("\nAfter Boom Payment of 100000:")
+        print("\nAfter Balloon Payment of 100000:")
         M.calculate_mortgage_maturity()
-        for key, value in M.mortgage_maturity.items():
+        for key, value in M.mortgage_maturity["monthly"].items():
+            print(f"  {key}: {value}")
+        for key, value in M.mortgage_maturity["fortnightly"].items():
             print(f"  {key}: {value}")
         amortization_schedule = M.amortization_table()
         print("Amortization Table (Monthly - first 5 periods):")
         for row in amortization_schedule["monthly"][:5]:  # show first 5 data
             print(row)
 
-        # add comment
-        M.add_comment("need extra money to for insurance.")
-        M.add_comment("borrow more money for buying a car.")
-
+        # add comments
+        M.add_comment("Need extra money for insurance.")
+        M.add_comment("Borrow more money for buying a car.")
         print("\nComments:")
         comments = M.get_comments()
         for comment in comments:

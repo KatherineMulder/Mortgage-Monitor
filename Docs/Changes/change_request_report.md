@@ -10,18 +10,7 @@ Entire layout for displaying the main page.
 14/05/2024
 
 ## Change Description
-For the programming part, my logical thinking differs from our original design. I will break down the programming add one more class which is the mortgage_monitor to represent the outcome.
-The original design consists of three class diagrams: users, mortgage, and transaction. The wireframe for the index page displays all the data in a table layout, matching the Excel spreadsheet details.
-In my design, I have incorporated more classes into my programming:
-- **Mortgage:** 
-- **Transaction:**  financial transactions related to mortgages, such as payments, disbursements, or fees.
-- **Mortgage_monitor:** Main class overseeing the system.
-- **User:**
-- **AnalysisPeriod:** This class represents the time period
-- **App:** handle interactions with the web interface
-overall: 
-- user - 
-I would like to represent the design differently than the original wireframe just the index page and the functionality remains the same.
+
 
 ## Scope
 This change request focuses on updating the appearance and layout of our web application and programming class structure. It involves rearranging elements like menus, page structures, colors, fonts, and overall design to enhance the user experience without altering functionality.

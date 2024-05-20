@@ -22,7 +22,7 @@
         </div>
     </nav>
 
-    <div class="container mt-4">
+     <div class="container mt-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div class="dropdown">
                 <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -30,22 +30,20 @@
                 </button>
                 <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                     {% for mortgage_detail in mortgage_details %}
-                        <a class="dropdown-item" href="#" data-id="{{ mortgage_detail['mortgage_id'] }}">Mortgage Name: {{ mortgage_detail['mortgage_name'] }}</a>
+                        <a class="dropdown-item" href="#" data-id="{{ mortgage_detail['mortgage_id'] }}">{{ mortgage_detail['mortgage_name'] }}</a>
                     {% endfor %}
                 </div>
             </div>
             <a href="{{ url_for('new_mortgage') }}" class="btn btn-secondary">Add New Mortgage</a>
+            <a href="{{ url_for('update_mortgage') }}" class="btn btn-secondary me-2">Update Mortgage</a>
+            <a href="{{ url_for('remove_mortgage') }}" class="btn btn-danger">Remove Mortgage</a>
         </div>
 
-        <div class="row">
+       <div class="row">
             {% for mortgage_detail in mortgage_details %}
-                <div class="col-md-12 mb-3">
+                <div class="col-md-12 mb-3 mortgage-card" id="mortgage-{{ mortgage_detail['mortgage_id'] }}" style="display: none;">
                     <div class="card h-100">
                         <div class="card-body">
-                            <div class="d-flex justify-content-end mb-3">
-                                <a href="{{ url_for('update_mortgage') }}" class="btn btn-secondary me-2">Update Mortgage</a>
-                                <a href="{{ url_for('remove_mortgage') }}" class="btn btn-danger">Remove Mortgage</a>
-                            </div>
                             <h5 class="card-title">Summary Overview</h5>
                             <p class="card-text">Mortgage Number: {{ mortgage_detail['mortgage_id'] }}</p>
                             <p class="card-text">Total Principal Amount: {{ '%.2f' | format(mortgage_detail['initial_principal']) }}</p>
@@ -61,87 +59,26 @@
                             <p class="card-text">Fortnightly Interest: {{ '%.2f' | format(mortgage_detail['initial_payment_breakdown']['initial_interest_fortnightly']) }}</p>
                             <p class="card-text">Fortnightly Principal: {{ '%.2f' | format(mortgage_detail['initial_payment_breakdown']['initial_principal_fortnightly']) }}</p>
                             <p class="card-text">Fortnightly Estimated Repayment: {{ '%.2f' | format(mortgage_detail['initial_payment_breakdown']['estimated_repayment_fortnightly']) }}</p>
-
                             <h5 class="card-title mt-4">Mortgage Maturity</h5>
                             {% for key, value in mortgage_detail['mortgage_maturity']['monthly'].items() %}
                                 <p class="card-text">{{ key.replace('_', ' ').capitalize() }}: {{ '%.2f' | format(value) }}</p>
                             {% endfor %}
 
-                            <h5 class="card-title mt-4">Amortization Table (Monthly - First 5 periods)</h5>
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Period</th>
-                                        <th>Balance</th>
-                                        <th>Interest</th>
-                                        <th>Principal</th>
-                                        <th>Extra</th>
-                                        <th>Total Payment</th>
-                                        <th>New Balance</th>
-                                        <th>Accumulated Interest</th>
-                                        <th>Accumulated Principal Payment</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for row in mortgage_detail['amortization_schedule']['monthly'][:5] %}
-                                        <tr>
-                                            <td>{{ row['Period'] }}</td>
-                                            <td>{{ '%.2f' | format(row['Balance']) }}</td>
-                                            <td>{{ '%.2f' | format(row['Interest']) }}</td>
-                                            <td>{{ '%.2f' | format(row['Principal']) }}</td>
-                                            <td>{{ '%.2f' | format(row['Extra']) }}</td>
-                                            <td>{{ '%.2f' | format(row['Total Payment']) }}</td>
-                                            <td>{{ '%.2f' | format(row['New Balance']) }}</td>
-                                            <td>{{ '%.2f' | format(row['Accumulated Interest']) }}</td>
-                                            <td>{{ '%.2f' | format(row['Accumulated Principal Payment']) }}</td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-
-                            <h5 class="card-title mt-4">Amortization Table (Fortnightly - First 5 periods)</h5>
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Period</th>
-                                        <th>Balance</th>
-                                        <th>Interest</th>
-                                        <th>Principal</th>
-                                        <th>Extra</th>
-                                        <th>Total Payment</th>
-                                        <th>New Balance</th>
-                                        <th>Accumulated Interest</th>
-                                        <th>Accumulated Principal Payment</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for row in mortgage_detail['amortization_schedule']['fortnightly'][:5] %}
-                                        <tr>
-                                            <td>{{ row['Period'] }}</td>
-                                            <td>{{ '%.2f' | format(row['Balance']) }}</td>
-                                            <td>{{ '%.2f' | format(row['Interest']) }}</td>
-                                            <td>{{ '%.2f' | format(row['Principal']) }}</td>
-                                            <td>{{ '%.2f' | format(row['Extra']) }}</td>
-                                            <td>{{ '%.2f' | format(row['Total Payment']) }}</td>
-                                            <td>{{ '%.2f' | format(row['New Balance']) }}</td>
-                                            <td>{{ '%.2f' | format(row['Accumulated Interest']) }}</td>
-                                            <td>{{ '%.2f' | format(row['Accumulated Principal Payment']) }}</td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+                            <h5 class="card-title mt-4">Comments</h5>
+                            {% for comment in mortgage_detail['comments'] %}
+                                <p class="card-text">{{ comment }}</p>
+                            {% endfor %}
                         </div>
                     </div>
                 </div>
             {% endfor %}
         </div>
-
         {% if error_message %}
             <div class="alert alert-danger mt-3">{{ error_message }}</div>
         {% endif %}
     </div>
 
-    <!-- Update Password Modal -->
+    <!-- update password -->
     <div class="modal fade" id="updatePasswordModal" tabindex="-1" aria-labelledby="updatePasswordModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -160,7 +97,7 @@
         </div>
     </div>
 
-    <!-- Remove Account Modal -->
+    <!-- remove account -->
     <div class="modal fade" id="removeAccountModal" tabindex="-1" aria-labelledby="removeAccountModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -221,6 +158,15 @@
                 }
             });
         });
+
+         $(document).ready(function() {
+            $('.dropdown-item').click(function() {
+                var mortgageId = $(this).data('id');
+                $('.mortgage-card').hide();
+                $('#mortgage-' + mortgageId).show();
+            });
+        });
+
     </script>
 </body>
 </html>
