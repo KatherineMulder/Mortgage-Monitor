@@ -2,11 +2,11 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 import psycopg2
 from user import UserManager
 from mortgage import Mortgage
+from graphing import generate_all_mortgage_charts
 
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "secret key"
-
 user_manager = UserManager()
 
 
@@ -124,6 +124,9 @@ def index():
                 'comments': comments,
                 'created_at': start_date
             })
+            # generate chart
+            charts = generate_all_mortgage_charts(mortgage_details)
+
     except Exception as e:
         error_message = f"An error occurred: {str(e)}"
     finally:
@@ -178,8 +181,12 @@ def new_mortgage():
         mortgage.calculate_initial_payment_breakdown()
         mortgage.calculate_mortgage_maturity()
 
+        initial_payment_breakdown_raw = mortgage.initial_payment_breakdown
+        initial_payment_breakdown_formatted = {key: f"{value:,.2f}" for key, value in mortgage.initial_payment_breakdown.items()}
+
         formatted_results = {
-            'initial_payment_breakdown': {key: f"{value:,.2f}" for key, value in mortgage.initial_payment_breakdown.items()},
+            'initial_payment_breakdown_raw': initial_payment_breakdown_raw,
+            'initial_payment_breakdown': initial_payment_breakdown_formatted,
             'mortgage_maturity': mortgage.mortgage_maturity,
             'comments': mortgage.get_comments()
         }
@@ -187,6 +194,21 @@ def new_mortgage():
         results = formatted_results
 
         if action == 'calculate':
+            return render_template('new_mortgage.html', results=results, mortgage_name=mortgage_name, principal=principal,
+                                   interest=interest, term=term, extra_costs=extra_costs, deposit=deposit,
+                                   payment_override_enabled=payment_override_enabled,
+                                   monthly_payment_override=monthly_payment_override,
+                                   fortnightly_payment_override=fortnightly_payment_override, comment=comment)
+
+        elif action == 'recalculate':
+            if payment_override_enabled and monthly_payment_override:
+                if monthly_payment_override <= initial_payment_breakdown_raw['estimated_repayment_monthly']:
+                    flash("The override amount must be higher than the estimated repayment", 'danger')
+                    return render_template('new_mortgage.html', results=results, mortgage_name=mortgage_name, principal=principal,
+                                           interest=interest, term=term, extra_costs=extra_costs, deposit=deposit,
+                                           payment_override_enabled=payment_override_enabled,
+                                           monthly_payment_override=monthly_payment_override,
+                                           fortnightly_payment_override=fortnightly_payment_override, comment=comment)
             return render_template('new_mortgage.html', results=results, mortgage_name=mortgage_name, principal=principal,
                                    interest=interest, term=term, extra_costs=extra_costs, deposit=deposit,
                                    payment_override_enabled=payment_override_enabled,
@@ -232,7 +254,6 @@ def new_mortgage():
                            payment_override_enabled=payment_override_enabled,
                            monthly_payment_override=monthly_payment_override,
                            fortnightly_payment_override=fortnightly_payment_override, comment=comment)
-
 
 @app.route("/update_mortgage")
 def update_mortgage():

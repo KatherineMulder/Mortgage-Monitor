@@ -13,7 +13,7 @@
             <div class="col">
                 <div class="main_mortgage p-4 border bg-light">
                     <h1 class="text-center">Calculate Mortgage</h1>
-                    <p class="text-left text-secondary ">After calculating your estimated payment, you can input an override amount, provided it is higher than the estimated repayment. Once you're satisfied with your entries, confirm the mortgage, and your details will be displayed on the main page.</p>
+                    <p class="text-left text-secondary">After calculating your estimated payment, you can input an override amount, provided it is higher than the estimated repayment. Once you're satisfied with your entries, confirm the mortgage, and your details will be displayed on the main page.</p>
                     <form id="mortgageForm" action="{{ url_for('new_mortgage') }}" method="POST">
                         <input type="hidden" name="action" value="calculate">
                         <div class="mb-3">
