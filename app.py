@@ -2,13 +2,11 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 import psycopg2
 from user import UserManager
 from mortgage import Mortgage
-from graphing import generate_all_mortgage_charts
-
+import logging
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "secret key"
 user_manager = UserManager()
-
 
 def connect_to_database():
     conn = psycopg2.connect(
@@ -21,11 +19,9 @@ def connect_to_database():
     conn.autocommit = True
     return conn
 
-
 @app.route("/", methods=["GET", "POST"])
 def root():
     return redirect(url_for("login"))
-
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -78,7 +74,6 @@ def signup():
 
     return render_template("signup.html")
 
-
 @app.route("/index")
 def index():
     if 'username' not in session:
@@ -112,6 +107,7 @@ def index():
             comments = [comment[0] for comment in comments]
 
             mortgage_details.append({
+                'mortgage_id': mortgage_id,
                 'mortgage_name': mortgage_name,
                 'initial_principal': principal,
                 'initial_interest': interest,
@@ -124,8 +120,6 @@ def index():
                 'comments': comments,
                 'created_at': start_date
             })
-            # generate chart
-            charts = generate_all_mortgage_charts(mortgage_details)
 
     except Exception as e:
         error_message = f"An error occurred: {str(e)}"
@@ -134,7 +128,6 @@ def index():
         conn.close()
 
     return render_template('index.html', username=username, mortgage_details=mortgage_details, error_message=error_message)
-
 
 @app.route("/new_mortgage", methods=["GET", "POST"])
 def new_mortgage():
@@ -255,18 +248,91 @@ def new_mortgage():
                            monthly_payment_override=monthly_payment_override,
                            fortnightly_payment_override=fortnightly_payment_override, comment=comment)
 
-@app.route("/update_mortgage")
-def update_mortgage():
+@app.route("/update_mortgage/<int:mortgage_id>", methods=["GET", "POST"])
+def update_mortgage(mortgage_id):
     if 'username' not in session:
         return redirect(url_for('login'))
-    return render_template('update_mortgage.html')
+
+    conn = connect_to_database()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM mortgages WHERE mortgage_id = %s", (mortgage_id,))
+    mortgage = cursor.fetchone()
+    cursor.close()
+
+    if not mortgage:
+        flash('Mortgage not found', 'danger')
+        return redirect(url_for('index'))
+
+    if request.method == 'POST':
+        principal = float(request.form.get("principal"))
+        interest = float(request.form.get("interest"))
+        term = int(request.form.get("term"))
+        extra_costs = float(request.form.get("extra_costs")) if request.form.get("extra_costs") else 0.0
+        deposit = float(request.form.get("deposit")) if request.form.get("deposit") else 0.0
+
+        payment_override_enabled = 'payment_override_enabled' in request.form
+        monthly_payment_override = float(request.form.get("monthly_payment_override")) if payment_override_enabled and request.form.get("monthly_payment_override") else None
+        fortnightly_payment_override = float(request.form.get("fortnightly_payment_override")) if payment_override_enabled and request.form.get("fortnightly_payment_override") else None
+        comment = request.form.get("comment")
+
+        try:
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE mortgages
+                SET principal = %s, interest = %s, term = %s, extra_costs = %s, deposit = %s, payment_override_enabled = %s, monthly_payment_override = %s, fortnightly_payment_override = %s
+                WHERE mortgage_id = %s
+            """, (principal, interest, term, extra_costs, deposit, payment_override_enabled, monthly_payment_override, fortnightly_payment_override, mortgage_id))
+
+            cursor.execute("DELETE FROM comments WHERE mortgage_id = %s", (mortgage_id,))
+            if comment:
+                cursor.execute("""
+                    INSERT INTO comments (mortgage_id, user_id, comment)
+                    VALUES (%s, (SELECT user_id FROM users WHERE username = %s), %s)
+                """, (mortgage_id, session['username'], comment))
+
+            conn.commit()
+            flash('Mortgage updated successfully!', 'success')
+        except Exception as e:
+            conn.rollback()
+            flash(f"An error occurred: {str(e)}", 'danger')
+        finally:
+            cursor.close()
+            conn.close()
+
+        return redirect(url_for('index'))
+
+    return render_template('update_mortgage.html', mortgage=mortgage)
 
 
-@app.route("/remove_mortgage")
-def remove_mortgage():
+@app.route("/remove_mortgage/<int:mortgage_id>", methods=["POST"])
+def remove_mortgage(mortgage_id):
     if 'username' not in session:
+        flash('You must be logged in to perform this action', 'danger')
         return redirect(url_for('login'))
-    return render_template('remove_mortgage.html')
+
+    conn = connect_to_database()
+    try:
+        cursor = conn.cursor()
+
+        # Add logging to track the deletion process
+        logging.debug(f"Attempting to delete mortgage with ID {mortgage_id}")
+
+        cursor.execute("DELETE FROM comments WHERE mortgage_id = %s", (mortgage_id,))
+        cursor.execute("DELETE FROM mortgages WHERE mortgage_id = %s", (mortgage_id,))
+
+        conn.commit()
+        logging.debug(f"Successfully deleted mortgage with ID {mortgage_id}")
+
+        flash('Mortgage removed successfully!', 'success')
+    except Exception as e:
+        conn.rollback()
+        logging.error(f"Error occurred while deleting mortgage with ID {mortgage_id}: {str(e)}")
+        flash(f"An error occurred: {str(e)}", 'danger')
+    finally:
+        cursor.close()
+        conn.close()
+
+    return redirect(url_for('index'))
 
 @app.route("/update_password", methods=['POST'])
 def update_password():
