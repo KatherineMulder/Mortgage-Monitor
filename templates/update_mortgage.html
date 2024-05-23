@@ -8,7 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </head>
 <body>
-    <div class="container py-5">
+     <div class="container py-5">
         <h1 class="text-center">Update Mortgage</h1>
         <form action="{{ url_for('update_mortgage', mortgage_id=mortgage_id) }}" method="POST">
             <div class="mb-3">
@@ -35,24 +35,35 @@
                 <label for="extra_costs" class="form-label">Extra Costs ($):</label>
                 <input type="number" class="form-control" id="extra_costs" name="extra_costs" value="{{ mortgage.extra_costs }}">
             </div>
-            <div class="mb-3">
-                <label for="comment" class="form-label">Comment:</label>
-                <textarea class="form-control" id="comment" name="comment"></textarea>
-            </div>
             <div class="form-check mb-3">
-                <input type="checkbox" class="form-check-input" id="payment_override_enabled" name="payment_override_enabled" onchange="toggleOverrideFields(this)" {% if mortgage.payment_override_enabled %} checked {% endif %}>
+                <input class="form-check-input" type="checkbox" id="payment_override_enabled" name="payment_override_enabled" {% if mortgage.payment_override_enabled %}checked{% endif %}>
                 <label class="form-check-label" for="payment_override_enabled">Enable Payment Override</label>
             </div>
             <div class="mb-3">
                 <label for="monthly_payment_override" class="form-label">Monthly Payment Override ($):</label>
-                <input type="number" class="form-control" id="monthly_payment_override" name="monthly_payment_override" step="0.01" {% if not mortgage.payment_override_enabled %} disabled {% endif %} value="{{ mortgage.monthly_payment_override }}">
+                <input type="number" class="form-control" id="monthly_payment_override" name="monthly_payment_override" value="{{ mortgage.monthly_payment_override }}">
             </div>
             <div class="mb-3">
                 <label for="fortnightly_payment_override" class="form-label">Fortnightly Payment Override ($):</label>
-                <input type="number" class="form-control" id="fortnightly_payment_override" name="fortnightly_payment_override" step="0.01" {% if not mortgage.payment_override_enabled %} disabled {% endif %} value="{{ mortgage.fortnightly_payment_override }}">
+                <input type="number" class="form-control" id="fortnightly_payment_override" name="fortnightly_payment_override" value="{{ mortgage.fortnightly_payment_override }}">
+            </div>
+            <div class="mb-3">
+                <label for="balloon_payment" class="form-label">Balloon Payment ($):</label>
+                <input type="number" class="form-control" id="balloon_payment" name="balloon_payment" step="0.01">
+            </div>
+            <div class="mb-3">
+                <label for="comment" class="form-label">Add New Comment:</label>
+                <textarea class="form-control" id="comment" name="comment" rows="3"></textarea>
             </div>
             <button type="submit" class="btn btn-primary">Update Mortgage</button>
         </form>
+        <hr>
+        <h3>Existing Comments</h3>
+        <ul class="list-group">
+            {% for comment in comments %}
+                <li class="list-group-item">{{ comment }}</li>
+            {% endfor %}
+        </ul>
     </div>
     <script>
         function toggleOverrideFields(checkbox) {
