@@ -83,7 +83,6 @@
                         {% endif %}
                         <p class="text-danger p-3 mb-2 bg-danger text-white"> NOTE: The override amount must be higher than the estimated repayment.</p>
                         <form id="overrideForm" action="{{ url_for('new_mortgage') }}" method="POST">
-                            <input type="hidden" name="action" value="save_mortgage">
                             <input type="hidden" name="mortgage_name" value="{{ mortgage_name }}">
                             <input type="hidden" name="principal" value="{{ principal }}">
                             <input type="hidden" name="interest" value="{{ interest }}">
@@ -105,8 +104,8 @@
                             </div>
                             <div class="d-flex justify-content-between">
                                 <button type="button" class="btn btn-secondary" onclick="clearOverrideForm()">Clear Override</button>
-                                <button type="submit" name="action" value="recalculate" class="btn btn-secondary">Recalculate with Override</button>
-                                <button type="submit" name="action" value="save_mortgage" class="btn btn-primary">Save Mortgage</button>
+                                <button type="button" class="btn btn-secondary" onclick="submitForm('recalculate')">Recalculate with Override</button>
+                                <button type="button" class="btn btn-primary" onclick="submitForm('save_mortgage')">Save Mortgage</button>
                             </div>
                         </form>
                     {% endif %}
@@ -140,6 +139,17 @@
                 monthlyOverrideField.value = "";
                 fortnightlyOverrideField.value = "";
             }
+        }
+
+        function submitForm(action) {
+            var form = document.getElementById("overrideForm");
+            form.action = "{{ url_for('new_mortgage') }}";
+            var actionInput = document.createElement("input");
+            actionInput.type = "hidden";
+            actionInput.name = "action";
+            actionInput.value = action;
+            form.appendChild(actionInput);
+            form.submit();
         }
     </script>
 </body>

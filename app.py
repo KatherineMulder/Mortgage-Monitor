@@ -8,16 +8,25 @@ app = Flask(__name__)
 app.config["SECRET_KEY"] = "secret key"
 user_manager = UserManager()
 
+logging.basicConfig(level=logging.DEBUG)
+
+
 def connect_to_database():
-    conn = psycopg2.connect(
-        dbname="mortgage_calculator",
-        user="postgres",
-        password="admin123",
-        host="localhost",
-        port="5432"
-    )
-    conn.autocommit = True
-    return conn
+    try:
+        conn = psycopg2.connect(
+            dbname="mortgage_calculator",
+            user="postgres",
+            password="admin123",
+            host="localhost",
+            port="5432"
+        )
+        conn.autocommit = True
+        logging.debug("Database connection established.")
+        return conn
+    except Exception as e:
+        logging.error(f"Failed to connect to the database: {str(e)}")
+        raise
+
 
 @app.route("/", methods=["GET", "POST"])
 def root():
@@ -45,6 +54,7 @@ def login():
                 return render_template('login.html', error="Invalid username or password")
 
         except Exception as e:
+            logging.error(f"Login error: {str(e)}")
             return f"An error occurred: {str(e)}"
 
     return render_template('login.html')
@@ -70,6 +80,7 @@ def signup():
             return redirect(url_for("login"))
 
         except Exception as e:
+            logging.error(f"Signup error: {str(e)}")
             return f"An error occurred: {str(e)}"
 
     return render_template("signup.html")
@@ -122,12 +133,14 @@ def index():
             })
 
     except Exception as e:
+        logging.error(f"Error fetching mortgage details: {str(e)}")
         error_message = f"An error occurred: {str(e)}"
     finally:
         cursor.close()
         conn.close()
 
     return render_template('index.html', username=username, mortgage_details=mortgage_details, error_message=error_message)
+
 
 @app.route("/new_mortgage", methods=["GET", "POST"])
 def new_mortgage():
@@ -174,12 +187,8 @@ def new_mortgage():
         mortgage.calculate_initial_payment_breakdown()
         mortgage.calculate_mortgage_maturity()
 
-        initial_payment_breakdown_raw = mortgage.initial_payment_breakdown
-        initial_payment_breakdown_formatted = {key: f"{value:,.2f}" for key, value in mortgage.initial_payment_breakdown.items()}
-
         formatted_results = {
-            'initial_payment_breakdown_raw': initial_payment_breakdown_raw,
-            'initial_payment_breakdown': initial_payment_breakdown_formatted,
+            'initial_payment_breakdown': {key: f"{value:,.2f}" for key, value in mortgage.initial_payment_breakdown.items()},
             'mortgage_maturity': mortgage.mortgage_maturity,
             'comments': mortgage.get_comments()
         }
@@ -187,21 +196,6 @@ def new_mortgage():
         results = formatted_results
 
         if action == 'calculate':
-            return render_template('new_mortgage.html', results=results, mortgage_name=mortgage_name, principal=principal,
-                                   interest=interest, term=term, extra_costs=extra_costs, deposit=deposit,
-                                   payment_override_enabled=payment_override_enabled,
-                                   monthly_payment_override=monthly_payment_override,
-                                   fortnightly_payment_override=fortnightly_payment_override, comment=comment)
-
-        elif action == 'recalculate':
-            if payment_override_enabled and monthly_payment_override:
-                if monthly_payment_override <= initial_payment_breakdown_raw['estimated_repayment_monthly']:
-                    flash("The override amount must be higher than the estimated repayment", 'danger')
-                    return render_template('new_mortgage.html', results=results, mortgage_name=mortgage_name, principal=principal,
-                                           interest=interest, term=term, extra_costs=extra_costs, deposit=deposit,
-                                           payment_override_enabled=payment_override_enabled,
-                                           monthly_payment_override=monthly_payment_override,
-                                           fortnightly_payment_override=fortnightly_payment_override, comment=comment)
             return render_template('new_mortgage.html', results=results, mortgage_name=mortgage_name, principal=principal,
                                    interest=interest, term=term, extra_costs=extra_costs, deposit=deposit,
                                    payment_override_enabled=payment_override_enabled,
@@ -247,6 +241,8 @@ def new_mortgage():
                            payment_override_enabled=payment_override_enabled,
                            monthly_payment_override=monthly_payment_override,
                            fortnightly_payment_override=fortnightly_payment_override, comment=comment)
+
+
 
 @app.route("/update_mortgage/<int:mortgage_id>", methods=["GET", "POST"])
 def update_mortgage(mortgage_id):
@@ -303,7 +299,6 @@ def update_mortgage(mortgage_id):
 
     return render_template('update_mortgage.html', mortgage=mortgage)
 
-
 @app.route("/remove_mortgage/<int:mortgage_id>", methods=["POST"])
 def remove_mortgage(mortgage_id):
     if 'username' not in session:
@@ -314,7 +309,7 @@ def remove_mortgage(mortgage_id):
     try:
         cursor = conn.cursor()
 
-        # Add logging to track the deletion process
+        #  track the deletion process
         logging.debug(f"Attempting to delete mortgage with ID {mortgage_id}")
 
         cursor.execute("DELETE FROM comments WHERE mortgage_id = %s", (mortgage_id,))
@@ -333,6 +328,7 @@ def remove_mortgage(mortgage_id):
         conn.close()
 
     return redirect(url_for('index'))
+
 
 @app.route("/update_password", methods=['POST'])
 def update_password():
@@ -360,3 +356,4 @@ def logout():
 
 if __name__ == "__main__":
     app.run(debug=True)
+

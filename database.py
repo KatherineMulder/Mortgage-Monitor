@@ -36,7 +36,7 @@ def create_database():
     conn.autocommit = True
     cursor = conn.cursor()
 
-    # create users table
+    # create users' table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
             user_id SERIAL PRIMARY KEY,
@@ -45,7 +45,7 @@ def create_database():
         )
     """)
 
-    # create mortgages table
+    # create mortgage table
     cursor.execute("""
          CREATE TABLE IF NOT EXISTS mortgages (
              mortgage_id SERIAL PRIMARY KEY,
@@ -63,18 +63,7 @@ def create_database():
          )
      """)
 
-    # create transactions table
-    cursor.execute("""
-           CREATE TABLE IF NOT EXISTS comments (
-               comment_id SERIAL PRIMARY KEY,
-               mortgage_id INTEGER REFERENCES mortgages(mortgage_id),
-               user_id INTEGER REFERENCES users(user_id),
-               comment TEXT NOT NULL,
-               comment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-           )
-       """)
-
-    # create comments table
+    # create comment table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS comments (
             comment_id SERIAL PRIMARY KEY,

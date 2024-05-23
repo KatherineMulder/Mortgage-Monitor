@@ -1,7 +1,7 @@
 # Change Request
 
 ## Title
-Redesign of Main Page Layout
+Redesign of Main Page Layout 
 
 ## Requester Information
 - **Name:** Katherine Mulder
