@@ -243,7 +243,6 @@ def new_mortgage():
                            fortnightly_payment_override=fortnightly_payment_override, comment=comment)
 
 
-
 @app.route("/update_mortgage/<int:mortgage_id>", methods=["GET", "POST"])
 def update_mortgage(mortgage_id):
     if 'username' not in session:
@@ -251,43 +250,41 @@ def update_mortgage(mortgage_id):
 
     conn = connect_to_database()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM mortgages WHERE mortgage_id = %s", (mortgage_id,))
-    mortgage = cursor.fetchone()
-    cursor.close()
-
-    if not mortgage:
-        flash('Mortgage not found', 'danger')
-        return redirect(url_for('index'))
 
     if request.method == 'POST':
-        principal = float(request.form.get("principal"))
-        interest = float(request.form.get("interest"))
-        term = int(request.form.get("term"))
-        extra_costs = float(request.form.get("extra_costs")) if request.form.get("extra_costs") else 0.0
-        deposit = float(request.form.get("deposit")) if request.form.get("deposit") else 0.0
-
-        payment_override_enabled = 'payment_override_enabled' in request.form
-        monthly_payment_override = float(request.form.get("monthly_payment_override")) if payment_override_enabled and request.form.get("monthly_payment_override") else None
-        fortnightly_payment_override = float(request.form.get("fortnightly_payment_override")) if payment_override_enabled and request.form.get("fortnightly_payment_override") else None
-        comment = request.form.get("comment")
-
         try:
-            cursor = conn.cursor()
+            mortgage_name = request.form.get("mortgage_name")
+            principal = float(request.form.get("principal"))
+            interest = float(request.form.get("interest"))
+            term = int(request.form.get("term"))
+            extra_costs = float(request.form.get("extra_costs")) if request.form.get("extra_costs") else 0.0
+            deposit = float(request.form.get("deposit")) if request.form.get("deposit") else 0.0
+            payment_override_enabled = 'payment_override_enabled' in request.form
+            monthly_payment_override = float(
+                request.form.get("monthly_payment_override")) if payment_override_enabled and request.form.get(
+                "monthly_payment_override") else None
+            fortnightly_payment_override = float(
+                request.form.get("fortnightly_payment_override")) if payment_override_enabled and request.form.get(
+                "fortnightly_payment_override") else None
+            comment = request.form.get("comment")
+
             cursor.execute("""
                 UPDATE mortgages
-                SET principal = %s, interest = %s, term = %s, extra_costs = %s, deposit = %s, payment_override_enabled = %s, monthly_payment_override = %s, fortnightly_payment_override = %s
+                SET mortgage_name = %s, principal = %s, interest = %s, term = %s, extra_costs = %s, deposit = %s, 
+                    payment_override_enabled = %s, monthly_payment_override = %s, fortnightly_payment_override = %s
                 WHERE mortgage_id = %s
-            """, (principal, interest, term, extra_costs, deposit, payment_override_enabled, monthly_payment_override, fortnightly_payment_override, mortgage_id))
+            """, (mortgage_name, principal, interest, term, extra_costs, deposit, payment_override_enabled,
+                  monthly_payment_override, fortnightly_payment_override, mortgage_id))
 
-            cursor.execute("DELETE FROM comments WHERE mortgage_id = %s", (mortgage_id,))
             if comment:
                 cursor.execute("""
                     INSERT INTO comments (mortgage_id, user_id, comment)
-                    VALUES (%s, (SELECT user_id FROM users WHERE username = %s), %s)
-                """, (mortgage_id, session['username'], comment))
+                    VALUES (%s, %s, %s)
+                """, (mortgage_id, session['user_id'], comment))
 
             conn.commit()
             flash('Mortgage updated successfully!', 'success')
+            return redirect(url_for('index'))
         except Exception as e:
             conn.rollback()
             flash(f"An error occurred: {str(e)}", 'danger')
@@ -295,9 +292,35 @@ def update_mortgage(mortgage_id):
             cursor.close()
             conn.close()
 
-        return redirect(url_for('index'))
+    else:
+        cursor.execute("""
+            SELECT mortgage_name, principal, interest, term, extra_costs, deposit, payment_override_enabled, 
+                   monthly_payment_override, fortnightly_payment_override
+            FROM mortgages
+            WHERE mortgage_id = %s
+        """, (mortgage_id,))
+        mortgage = cursor.fetchone()
+        cursor.close()
+        conn.close()
 
-    return render_template('update_mortgage.html', mortgage=mortgage)
+        if mortgage is None:
+            flash("Mortgage not found!", 'danger')
+            return redirect(url_for('index'))
+
+        mortgage_details = {
+            'mortgage_name': mortgage[0],
+            'principal': mortgage[1],
+            'interest': mortgage[2],
+            'term': mortgage[3],
+            'extra_costs': mortgage[4],
+            'deposit': mortgage[5],
+            'payment_override_enabled': mortgage[6],
+            'monthly_payment_override': mortgage[7],
+            'fortnightly_payment_override': mortgage[8]
+        }
+
+        return render_template('update_mortgage.html', mortgage=mortgage_details, mortgage_id=mortgage_id)
+
 
 @app.route("/remove_mortgage/<int:mortgage_id>", methods=["POST"])
 def remove_mortgage(mortgage_id):

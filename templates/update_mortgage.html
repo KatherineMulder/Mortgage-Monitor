@@ -4,89 +4,76 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Update Mortgage</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style_add_mortgage.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </head>
 <body>
-
-    <header class="container">
-        <h1 class="mt-4 mb-4">Update Mortgage</h1>
-    </header>
-
-    <main class="container main_mortgage">
-        <section class="container_mortgage">
-            <div class="input-container">
-                <div class="row mb-3">
-                    <div class="col">
-                        <label for="Mortgage">Select Mortgage:</label>
-                        <select id="Mortgage" class="form-control" required>
-                            <option selected disabled>Select Mortgage Name</option>
-                            {% for mortgage_detail in mortgage_details[1:] %}
-                                <option value="{{ mortgage_detail[0] }}">Mortgage Name: {{ mortgage_detail[1] }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-
-                <div class="row mb-3">
-                    <div class="col">
-                        <label for="date">Date:</label>
-                        <input type="date" id="date" class="form-control" required>
-                    </div>
-                </div>
-
-                <div class="row mb-3">
-                    <div class="col">
-                        <label for="principal">New Principal ($):</label>
-                        <input type="number" id="principal" class="form-control" required>
-                    </div>
-                </div>
-
-                <div class="row mb-3">
-                    <div class="col">
-                        <label for="interest">New Interest (%):</label>
-                        <input type="number" id="interest" class="form-control" required>
-                    </div>
-                </div>
-
-                <div class="row mb-3">
-                    <div class="col">
-                        <label for="term_years">New Term (Years):</label>
-                        <input type="number" id="term_years" class="form-control" required>
-                    </div>
-                </div>
-
-                <div class="row mb-3">
-                    <div class="col">
-                        <label for="payment_override">Extra Payment($):</label>
-                        <input type="number" id="payment_override" class="form-control" required>
-                    </div>
-                </div>
-
-                <div class="row mb-3">
-                    <div class="col">
-                        <label for="additionalCosts">Additional Costs ($):</label>
-                        <input type="number" id="additionalCosts" class="form-control" required>
-                    </div>
-                </div>
-
-                <div class="row mb-3">
-                    <div class="col">
-                        <label for="commonField">Comment:</label>
-                        <textarea id="commonField" class="form-control" rows="4" cols="50" required></textarea>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col">
-                        <button onclick="calculate()" class="btn btn-primary">Update Mortgage</button>
-                        <button onclick="saveChange()" class="btn btn-primary">Save Change</button>
-                        <button onclick="cancel_update()" class="btn btn-secondary">Cancel</button>
-                    </div>
-                </div>
+    <div class="container py-5">
+        <h1 class="text-center">Update Mortgage</h1>
+        <form action="{{ url_for('update_mortgage', mortgage_id=mortgage_id) }}" method="POST">
+            <div class="mb-3">
+                <label for="mortgage_name" class="form-label">Mortgage Name:</label>
+                <input type="text" class="form-control" id="mortgage_name" name="mortgage_name" value="{{ mortgage.mortgage_name }}" required>
             </div>
-        </section>
-    </main>
+            <div class="mb-3">
+                <label for="principal" class="form-label">Principal ($):</label>
+                <input type="number" class="form-control" id="principal" name="principal" value="{{ mortgage.principal }}" required>
+            </div>
+            <div class="mb-3">
+                <label for="interest" class="form-label">Interest (%):</label>
+                <input type="number" class="form-control" id="interest" name="interest" value="{{ mortgage.interest }}" step="0.01" required>
+            </div>
+            <div class="mb-3">
+                <label for="term" class="form-label">Term (Years):</label>
+                <input type="number" class="form-control" id="term" name="term" value="{{ mortgage.term }}" required>
+            </div>
+            <div class="mb-3">
+                <label for="deposit" class="form-label">Deposit ($):</label>
+                <input type="number" class="form-control" id="deposit" name="deposit" value="{{ mortgage.deposit }}">
+            </div>
+            <div class="mb-3">
+                <label for="extra_costs" class="form-label">Extra Costs ($):</label>
+                <input type="number" class="form-control" id="extra_costs" name="extra_costs" value="{{ mortgage.extra_costs }}">
+            </div>
+            <div class="mb-3">
+                <label for="comment" class="form-label">Comment:</label>
+                <textarea class="form-control" id="comment" name="comment"></textarea>
+            </div>
+            <div class="form-check mb-3">
+                <input type="checkbox" class="form-check-input" id="payment_override_enabled" name="payment_override_enabled" onchange="toggleOverrideFields(this)" {% if mortgage.payment_override_enabled %} checked {% endif %}>
+                <label class="form-check-label" for="payment_override_enabled">Enable Payment Override</label>
+            </div>
+            <div class="mb-3">
+                <label for="monthly_payment_override" class="form-label">Monthly Payment Override ($):</label>
+                <input type="number" class="form-control" id="monthly_payment_override" name="monthly_payment_override" step="0.01" {% if not mortgage.payment_override_enabled %} disabled {% endif %} value="{{ mortgage.monthly_payment_override }}">
+            </div>
+            <div class="mb-3">
+                <label for="fortnightly_payment_override" class="form-label">Fortnightly Payment Override ($):</label>
+                <input type="number" class="form-control" id="fortnightly_payment_override" name="fortnightly_payment_override" step="0.01" {% if not mortgage.payment_override_enabled %} disabled {% endif %} value="{{ mortgage.fortnightly_payment_override }}">
+            </div>
+            <button type="submit" class="btn btn-primary">Update Mortgage</button>
+        </form>
+    </div>
+    <script>
+        function toggleOverrideFields(checkbox) {
+            var monthlyOverrideField = document.getElementById("monthly_payment_override");
+            var fortnightlyOverrideField = document.getElementById("fortnightly_payment_override");
+            if (checkbox.checked) {
+                monthlyOverrideField.disabled = false;
+                fortnightlyOverrideField.disabled = false;
+            } else {
+                monthlyOverrideField.disabled = true;
+                fortnightlyOverrideField.disabled = true;
+                monthlyOverrideField.value = "";
+                fortnightlyOverrideField.value = "";
+            }
+        }
 
+        // Initialize override fields based on initial checkbox state
+        window.onload = function() {
+            var checkbox = document.getElementById("payment_override_enabled");
+            toggleOverrideFields(checkbox);
+        };
+    </script>
 </body>
 </html>
