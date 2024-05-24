@@ -131,7 +131,7 @@
         function clearForm() {
             document.getElementById("mortgageForm").reset();
             var resultItems = document.querySelectorAll(".result-container .result-item p");
-            resultItems.forEach(function(item) {
+            resultItems.forEach(function (item) {
                 item.innerHTML = "";
             });
         }
@@ -165,6 +165,49 @@
             form.appendChild(actionInput);
             form.submit();
         }
-    </script>
+
+         $(document).ready(function() {
+        $("#updatePasswordBtn").click(function() {
+            $("#updatePasswordModal").modal('show');
+        });
+
+        $("#updatePasswordForm").submit(function(event) {
+            event.preventDefault();
+            $.ajax({
+                type: "POST",
+                url: "{{ url_for('update_password') }}",
+                data: $(this).serialize(),
+                success: function(response) {
+                    alert(response.message);
+                    $("#updatePasswordModal").modal('hide');
+                },
+                error: function(xhr, status, error) {
+                    alert("Error: " + xhr.responseText);
+                }
+            });
+        });
+
+        $("#removeAccountBtn").click(function() {
+            $("#removeAccountModal").modal('show');
+        });
+
+        $("#removeAccountForm").submit(function(event) {
+            event.preventDefault();
+            if (confirm("Are you sure you want to remove your account?")) {
+                $.ajax({
+                    type: "POST",
+                    url: "{{ url_for('remove_user') }}",
+                    success: function(response) {
+                        alert(response.message);
+                        window.location.href = "{{ url_for('login') }}";
+                    },
+                    error: function(xhr, status, error) {
+                        alert("Error: " + xhr.responseText);
+                    }
+                });
+            }
+        });
+    });
+ </script>
 </body>
 </html>

@@ -14,12 +14,7 @@
                 <img src="/static/mortgage_calculator_logo.png" alt="Logo" width="90" height="70" class="d-inline-block align-top">
                 Mortgage Monitor
             </a>
-            <div class="d-flex align-items-center">
-                <span class="navbar-text me-3 display-6">Hello &#128512;, <span class="text-primary display-6">{{ username }}</span>!</span>
-                <button class="btn btn-outline-secondary me-2 fs-5" id="updatePasswordBtn">Update Password</button>
-                <button class="btn btn-outline-secondary me-2 fs-5" id="removeAccountBtn">Remove Account</button>
-                <a class="btn btn-outline-secondary ms-3 fs-5" href="{{ url_for('logout') }}">Logout</a>
-            </div>
+             {% include '_navbar.html' %}
         </div>
     </nav>
      <div class="container py-5">
@@ -94,11 +89,12 @@
             }
         }
 
-        // Initialize override fields based on initial checkbox state
+        // for the override
         window.onload = function() {
             var checkbox = document.getElementById("payment_override_enabled");
             toggleOverrideFields(checkbox);
         };
+
     </script>
 </body>
 </html>

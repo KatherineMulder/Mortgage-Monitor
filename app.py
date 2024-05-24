@@ -5,7 +5,7 @@ from mortgage import Mortgage
 import logging
 import pandas as pd
 from io import BytesIO
-from psycopg2.extras import DictCursor
+
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "secret key"
@@ -505,37 +505,38 @@ def amortization_schedule(mortgage_id):
     return render_template('amortization_schedule.html', mortgage=mortgage)
 
 
-# @app.route('/export_amortization/<int:mortgage_id>', methods=['GET'])
-# def export_amortization(mortgage_id):
-#     if 'username' not in session:
-#         return redirect(url_for('login'))
-#
-#     try:
-#         mortgage = get_mortgage_details(mortgage_id)
-#         if not mortgage:
-#             return "Mortgage not found", 404
-#
-#         amortization_schedule_monthly = mortgage['amortization_schedule']['monthly']
-#         amortization_schedule_fortnightly = mortgage['amortization_schedule']['fortnightly']
-#
-#         # create data frames
-#         df_monthly = pd.DataFrame(amortization_schedule_monthly)
-#         df_fortnightly = pd.DataFrame(amortization_schedule_fortnightly)
-#
-#         # create a BytesIO buffer and write the data frames to it
-#         buffer = BytesIO()
-#         with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
-#             df_monthly.to_excel(writer, sheet_name='Monthly')
-#             df_fortnightly.to_excel(writer, sheet_name='Fortnightly')
-#
-#         buffer.seek(0)
-#
-#         # send the buffer as a response
-#         return send_file(buffer, as_attachment=True, download_name=f'amortization_schedule_{mortgage_id}.xlsx', mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-#
-#     except Exception as e:
-#         logging.error(f"Error generating Excel file: {str(e)}")
-#         return "An error occurred while generating the file", 500
+@app.route('/export_amortization/<int:mortgage_id>')
+def export_amortization(mortgage_id):
+    try:
+        logging.info("Retrieving mortgage details")
+        mortgage = get_mortgage_details(mortgage_id)
+        if mortgage is None:
+            logging.warning(f"Mortgage with ID {mortgage_id} not found")
+            return "Mortgage not found", 404
+
+        logging.info("Converting amortization schedule to data frames")
+        amortization_schedule = mortgage['amortization_schedule']
+
+        # convert the amortization schedule to DataFrames
+        df_monthly = pd.DataFrame(amortization_schedule['monthly'])
+        df_fortnightly = pd.DataFrame(amortization_schedule['fortnightly'])
+
+        logging.info("creating excel writer")
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df_monthly.to_excel(writer, index=False, sheet_name='Monthly')
+            df_fortnightly.to_excel(writer, index=False, sheet_name='Fortnightly')
+
+        logging.info("export successful")
+        output.seek(0)
+
+        # send the file
+        return send_file(output, as_attachment=True, download_name='amortization_schedule.xlsx', mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+    except Exception as e:
+        logging.error(f"Error exporting amortization schedule: {str(e)}")
+        return "Internal Server Error", 500
+
 
 
 if __name__ == "__main__":
