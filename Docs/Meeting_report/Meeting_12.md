@@ -16,7 +16,7 @@ He also showed me a different way to use getter and setter methods to make the c
 Remove the formatting method in the calculation, and once it is working as expected, then add more functions such as overriding payments and balloon payments, etc.
 
 ### Follow-Up Plan
-Aim to complete this function before Tuesday, 21/05, to be able to show John. I can then present it to the client, discuss any further improvements, 
+Aim to complete this function before Tuesday, 24/05, to be able to show John. I can then present it to the client, discuss any further improvements, 
 and make changes if necessary during the client meeting.
 
 

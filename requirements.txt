@@ -1,4 +1,7 @@
-Flask
+Flask~=3.0.3
 psycopg2-binary
-Plotly
-pytest
+Plotly~=5.22.0
+pytest~=8.1.1
+
+psycopg2~=2.9.9
+pandas~=2.2.2
