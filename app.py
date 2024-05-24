@@ -5,11 +5,11 @@ from mortgage import Mortgage
 import logging
 import pandas as pd
 from io import BytesIO
+import database
 
-
+user_manager = UserManager()
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "secret key"
-user_manager = UserManager()
 logging.basicConfig(level=logging.DEBUG)
 
 
@@ -538,9 +538,6 @@ def export_amortization(mortgage_id):
         return "Internal Server Error", 500
 
 
-
 if __name__ == "__main__":
-    import database
-
     database.create_database()
     app.run(debug=True)
