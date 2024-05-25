@@ -6,6 +6,7 @@ import logging
 import pandas as pd
 from io import BytesIO
 import database
+from graphing import create_amortization_charts
 
 user_manager = UserManager()
 app = Flask(__name__)
@@ -120,6 +121,7 @@ def index():
             mortgage_obj.calculate_initial_payment_breakdown()
             mortgage_obj.calculate_mortgage_maturity()
             amortization_schedule = mortgage_obj.amortization_table()
+            graph_html_monthly, graph_html_fortnightly = create_amortization_charts(amortization_schedule)
 
             cursor.execute("SELECT comment FROM comments WHERE mortgage_id = %s", (mortgage_id,))
             comments = cursor.fetchall()
@@ -137,7 +139,9 @@ def index():
                 'mortgage_maturity': mortgage_obj.mortgage_maturity,
                 'amortization_schedule': amortization_schedule,
                 'comments': comments,
-                'created_at': start_date
+                'created_at': start_date,
+                'graph_html_monthly': graph_html_monthly,
+                'graph_html_fortnightly': graph_html_fortnightly
             })
 
     except Exception as e:
@@ -536,6 +540,12 @@ def export_amortization(mortgage_id):
     except Exception as e:
         logging.error(f"Error exporting amortization schedule: {str(e)}")
         return "Internal Server Error", 500
+
+
+def get_amortization_schedules(self):
+    return self.amortization_table()
+
+
 
 
 if __name__ == "__main__":

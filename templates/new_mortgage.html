@@ -23,142 +23,121 @@
             </div>
         </div>
     </nav>
-    <div class="container py-5">
+    <div class="container-fluid py-5">
         <div class="row gx-5">
-            <div class="col">
+            <div class="col-lg-4 col-md-6 col-sm-12">
                 <div class="main_mortgage p-4 border bg-light">
                     <h1 class="text-center">Calculate Mortgage</h1>
-                    <p class="text-left text-secondary">After calculating your estimated payment, you can input an override amount, provided it is higher than the estimated repayment. Once you're satisfied with your entries, confirm the mortgage, and your details will be displayed on the main page.</p>
+                    <p class="text-left text-secondary fs-4">After calculating your estimated payment, you can input an override amount, provided it is higher than the estimated repayment. Once you're satisfied with your entries, confirm the mortgage, and your details will be displayed on the main page.</p>
                     <form id="mortgageForm" action="{{ url_for('new_mortgage') }}" method="POST">
                         <input type="hidden" name="action" value="calculate">
                         <div class="mb-3">
-                            <label for="mortgage_name" class="form-label">Mortgage Name:</label>
-                            <input type="text" class="form-control" id="mortgage_name" name="mortgage_name" required>
+                            <label for="mortgage_name" class="form-label fs-4">Mortgage Name:</label>
+                            <input type="text" class="form-control fs-4" id="mortgage_name" name="mortgage_name" required>
                         </div>
                         <div class="mb-3">
-                            <label for="principal" class="form-label">Principal ($):</label>
-                            <input type="number" class="form-control" id="principal" name="principal" required>
+                            <label for="principal" class="form-label fs-4">Principal ($):</label>
+                            <input type="number" class="form-control fs-4" id="principal" name="principal" required>
                         </div>
                         <div class="mb-3">
-                            <label for="interest" class="form-label">Interest (%):</label>
-                            <input type="number" class="form-control" id="interest" name="interest" step="0.01" required>
+                            <label for="interest" class="form-label fs-4">Interest (%):</label>
+                            <input type="number" class="form-control fs-4" id="interest" name="interest" step="0.01" required>
                         </div>
                         <div class="mb-3">
-                            <label for="term" class="form-label">Term (Years):</label>
-                            <input type="number" class="form-control" id="term" name="term" required>
+                            <label for="term" class="form-label fs-4">Term (Years):</label>
+                            <input type="number" class="form-control fs-4" id="term" name="term" required>
                         </div>
                         <div class="mb-3">
-                            <label for="deposit" class="form-label">Deposit ($):</label>
-                            <input type="number" class="form-control" id="deposit" name="deposit">
+                            <label for="deposit" class="form-label fs-4">Deposit ($):</label>
+                            <input type="number" class="form-control fs-4" id="deposit" name="deposit">
                         </div>
                         <div class="mb-3">
-                            <label for="extra_costs" class="form-label">Extra Costs ($):</label>
-                            <input type="number" class="form-control" id="extra_costs" name="extra_costs">
+                            <label for="extra_costs" class="form-label fs-4">Extra Costs ($):</label>
+                            <input type="number" class="form-control fs-4" id="extra_costs" name="extra_costs">
                         </div>
                         <div class="mb-3">
-                            <label for="comment" class="form-label">Comment:</label>
-                            <textarea class="form-control" id="comment" name="comment"></textarea>
+                            <label for="comment" class="form-label fs-4">Comment:</label>
+                            <textarea class="form-control fs-4" id="comment" name="comment"></textarea>
                         </div>
                         <div class="d-flex justify-content-between">
-                            <button type="button" class="btn btn-secondary" onclick="clearForm()">Clear</button>
-                            <button type="submit" class="btn btn-primary" onclick="document.getElementById('mortgageForm').action.value='calculate'">Calculate</button>
+                            <button type="button" class="btn btn-secondary fs-4" onclick="clearForm()">Clear</button>
+                            <button type="submit" class="btn btn-primary fs-4" onclick="document.getElementById('mortgageForm').action.value='calculate'">Calculate</button>
                         </div>
                     </form>
                 </div>
             </div>
-            <div class="col">
+            <div class="col-lg-4 col-md-6 col-sm-12">
                 <div class="result p-4 border bg-light">
                     <h1 class="text-center">Mortgage Results</h1>
                     {% if results %}
                         <h5 class="text-center text-capitalize text-secondary">Initial Payment Breakdown</h5>
-                        <p><strong>Mortgage Name:</strong> {{ mortgage_name }}</p>
-                        <p><strong>Initial Principal:</strong> $ {{ principal }} </p>
-                        <p><strong>Initial Interest:</strong> {{ interest }} %</p>
-                        <p><strong>Initial Term:</strong> {{ term }} years</p>
-                        <p><strong>Initial Deposit:</strong> $ {{ deposit }}</p>
-                        <p><strong>Initial Extra Costs:</strong> $ {{ extra_costs }}</p>
+                        <p class="fs-4 mb-3">Mortgage Name: {{ mortgage_name }}</p>
+                        <p class="fs-4 mb-3">Initial Principal: $ {{ principal }}</p>
+                        <p class="fs-4 mb-3">Initial Interest: {{ interest }} %</p>
+                        <p class="fs-4 mb-3">Initial Term: {{ term }} years</p>
+                        <p class="fs-4 mb-3">Initial Deposit: $ {{ deposit }}</p>
+                        <p class="fs-4 mb-3">Initial Extra Costs: $ {{ extra_costs }}</p>
                         <hr>
-                        <p><strong>Total Amount Borrowed:</strong> $ {{ results.initial_payment_breakdown.total_amount_borrowed }}</p>
-                        <p><strong>Monthly Estimated Repayment:</strong> $ {{ results.initial_payment_breakdown.estimated_repayment_monthly }}</p>
-                        <p><strong>Monthly Interest:</strong> $ {{ results.initial_payment_breakdown.initial_interest_monthly }}</p>
-                        <p><strong>Monthly Principal:</strong> $ {{ results.initial_payment_breakdown.initial_principal_monthly }} </p>
-                        <p><strong>Monthly Extra:</strong> $ {{ results.initial_payment_breakdown.initial_extra_monthly }}</p>
-                        <p><strong>Monthly Total Repayment:</strong> $ {{ results.initial_payment_breakdown.total_repayment_monthly }}</p>
+                        <p class="fs-4 mb-3">Total Amount Borrowed: $ {{ results.initial_payment_breakdown.total_amount_borrowed }}</p>
+                        <p class="fs-4 mb-3">Monthly Estimated Repayment: $ {{ results.initial_payment_breakdown.estimated_repayment_monthly }}</p>
+                        <p class="fs-4 mb-3">Monthly Interest: $ {{ results.initial_payment_breakdown.initial_interest_monthly }}</p>
+                        <p class="fs-4 mb-3">Monthly Principal: $ {{ results.initial_payment_breakdown.initial_principal_monthly }}</p>
+                        <p class="fs-4 mb-3">Monthly Extra: $ {{ results.initial_payment_breakdown.initial_extra_monthly }}</p>
+                        <p class="fs-4 mb-3">Monthly Total Repayment: $ {{ results.initial_payment_breakdown.total_repayment_monthly }}</p>
                         <hr>
-                        <p><strong>Fortnightly Estimated Repayment:</strong> $ {{ results.initial_payment_breakdown.estimated_repayment_fortnightly }}</p>
-                        <p><strong>Fortnightly Interest:</strong> $ {{ results.initial_payment_breakdown.initial_interest_fortnightly }}</p>
-                        <p><strong>Fortnightly Principal:</strong> $ {{ results.initial_payment_breakdown.initial_principal_fortnightly }}</p>
-                        <p><strong>Fortnightly Extra:</strong> $ {{ results.initial_payment_breakdown.initial_extra_fortnightly }}</p>
-                        <p><strong>Fortnightly Total Repayment:</strong> $ {{ results.initial_payment_breakdown.total_repayment_fortnightly }}</p>
+                        <p class="fs-4 mb-3">Fortnightly Estimated Repayment: $ {{ results.initial_payment_breakdown.estimated_repayment_fortnightly }}</p>
+                        <p class="fs-4 mb-3">Fortnightly Interest: $ {{ results.initial_payment_breakdown.initial_interest_fortnightly }}</p>
+                        <p class="fs-4 mb-3">Fortnightly Principal: $ {{ results.initial_payment_breakdown.initial_principal_fortnightly }}</p>
+                        <p class="fs-4 mb-3">Fortnightly Extra: $ {{ results.initial_payment_breakdown.initial_extra_fortnightly }}</p>
+                        <p class="fs-4 mb-3">Fortnightly Total Repayment: $ {{ results.initial_payment_breakdown.total_repayment_fortnightly }}</p>
+
                         {% if results.comments %}
                             <h3>Comment</h3>
                             {% for comment in results.comments %}
-                                <p>{{ comment }}</p>
+                                <p class="fs-4">{{ comment }}</p>
                             {% endfor %}
                         {% endif %}
-                        <p class="text-danger p-3 mb-2 bg-danger text-white"> NOTE: The override amount must be higher than the estimated repayment.</p>
-                        <form id="overrideForm" action="{{ url_for('new_mortgage') }}" method="POST">
-                            <input type="hidden" name="mortgage_name" value="{{ mortgage_name }}">
-                            <input type="hidden" name="principal" value="{{ principal }}">
-                            <input type="hidden" name="interest" value="{{ interest }}">
-                            <input type="hidden" name="term" value="{{ term }}">
-                            <input type="hidden" name="deposit" value="{{ deposit }}">
-                            <input type="hidden" name="extra_costs" value="{{ extra_costs }}">
-                            <input type="hidden" name="comment" value="{{ comment }}">
-                            <div class="form-check mb-3">
-                                <input type="checkbox" class="form-check-input" id="payment_override_enabled" name="payment_override_enabled" onchange="toggleOverrideFields(this)" {% if payment_override_enabled %} checked {% endif %}>
-                                <label class="form-check-label" for="payment_override_enabled">Enable Payment Override</label>
-                            </div>
-                            <div class="mb-3">
-                                <label for="monthly_payment_override" class="form-label">Monthly Payment Override ($):</label>
-                                <input type="number" class="form-control" id="monthly_payment_override" name="monthly_payment_override" step="0.01" {% if not payment_override_enabled %} disabled {% endif %} value="{{ monthly_payment_override }}">
-                            </div>
-                            <div class="mb-3">
-                                <label for="fortnightly_payment_override" class="form-label">Fortnightly Payment Override ($):</label>
-                                <input type="number" class="form-control" id="fortnightly_payment_override" name="fortnightly_payment_override" step="0.01" {% if not payment_override_enabled %} disabled {% endif %} value="{{ fortnightly_payment_override }}">
-                            </div>
-                            <div class="d-flex justify-content-between">
-                                <button type="button" class="btn btn-secondary" onclick="clearOverrideForm()">Clear Override</button>
-                                <button type="button" class="btn btn-secondary" onclick="submitForm('recalculate')">Recalculate with Override</button>
-                                <button type="button" class="btn btn-primary" onclick="submitForm('save_mortgage')">Save Mortgage</button>
-                            </div>
-                        </form>
+                        <div class="d-flex justify-content-between mt-3">
+                            <button type="button" class="btn btn-secondary fs-4" onclick="clearForm()">Clear Form</button>
+                        </div>
                     {% endif %}
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Update Password Modal -->
-    <div class="modal fade" id="updatePasswordModal" tabindex="-1" aria-labelledby="updatePasswordModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="updatePasswordModalLabel">Update Password</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="updatePasswordForm">
-                        <div class="mb-3">
-                            <label for="currentPassword" class="form-label">Current Password</label>
-                            <input type="password" class="form-control" id="currentPassword" name="current_password" required>
+            <div class="col-lg-4 col-md-6 col-sm-12">
+                <div class="override p-4 border bg-light">
+                    <p class="text-danger p-3 mb-2 bg-danger text-white fs-4">NOTE: The override amount must be higher than the estimated repayment.</p>
+                    <form id="overrideForm" action="{{ url_for('new_mortgage') }}" method="POST">
+                        <input class="fs-4" type="hidden" name="mortgage_name" value="{{ mortgage_name }}">
+                        <input class="fs-4" type="hidden" name="principal" value="{{ principal }}">
+                        <input class="fs-4" type="hidden" name="interest" value="{{ interest }}">
+                        <input class="fs-4" type="hidden" name="term" value="{{ term }}">
+                        <input class="fs-4" type="hidden" name="deposit" value="{{ deposit }}">
+                        <input class="fs-4" type="hidden" name="extra_costs" value="{{ extra_costs }}">
+                        <input class="fs-4" type="hidden" name="comment" value="{{ comment }}">
+                        <div class="form-check mb-3">
+                            <input type="checkbox" class="form-check-input fs-4" id="payment_override_enabled" name="payment_override_enabled" onchange="toggleOverrideFields(this)" {% if payment_override_enabled %} checked {% endif %}>
+                            <label class="form-check-label fs-4" for="payment_override_enabled">Enable Payment Override</label>
                         </div>
                         <div class="mb-3">
-                            <label for="newPassword" class="form-label">New Password</label>
-                            <input type="password" class="form-control" id="newPassword" name="new_password" required>
+                            <label for="monthly_payment_override" class="form-label fs-4">Monthly Payment Override ($):</label>
+                            <input type="number" class="form-control fs-4" id="monthly_payment_override" name="monthly_payment_override" step="0.01" {% if not payment_override_enabled %} disabled {% endif %} value="{{ monthly_payment_override }}">
                         </div>
                         <div class="mb-3">
-                            <label for="confirmNewPassword" class="form-label">Confirm New Password</label>
-                            <input type="password" class="form-control" id="confirmNewPassword" name="confirm_new_password" required>
+                            <label for="fortnightly_payment_override" class="form-label fs-4">Fortnightly Payment Override ($):</label>
+                            <input type="number" class="form-control fs-4" id="fortnightly_payment_override" name="fortnightly_payment_override" step="0.01" {% if not payment_override_enabled %} disabled {% endif %} value="{{ fortnightly_payment_override }}">
                         </div>
-                        <button type="submit" class="btn btn-primary">Update Password</button>
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-secondary fs-4" onclick="clearOverrideForm()">Clear Override</button>
+                            <button type="button" class="btn btn-secondary fs-4" onclick="submitForm('recalculate')">Recalculate with Override</button>
+                            <button type="button" class="btn btn-primary fs-4" onclick="submitForm('save_mortgage')">Save Mortgage</button>
+                        </div>
                     </form>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Remove Account Modal -->
+    <!-- remove Account Modal -->
     <div class="modal fade" id="removeAccountModal" tabindex="-1" aria-labelledby="removeAccountModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -179,7 +158,7 @@
     <script>
         function clearForm() {
             document.getElementById("mortgageForm").reset();
-            var resultItems = document.querySelectorAll(".result-container .result-item p");
+            var resultItems = document.querySelectorAll(".result p.fs-4");
             resultItems.forEach(function (item) {
                 item.innerHTML = "";
             });
