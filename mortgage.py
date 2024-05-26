@@ -23,6 +23,7 @@ class Mortgage:
         self.initial_payment_breakdown: Dict = {}
         self.mortgage_maturity: Dict = {}
         self.amortization_schedule: Dict[str, List[Dict[str, float]]] = {}
+        self.interest_rate_changes: List[Dict] = []
 
     @property
     def mortgage_id(self) -> Optional[int]:
@@ -282,7 +283,7 @@ class Mortgage:
     def amortization_table(self):
         total_amount_borrowed = self.initial_payment_breakdown["total_amount_borrowed"]
         term = self._initial_term
-        interest = self._initial_interest
+        initial_interest = self._initial_interest
         override = self.payment_override_enabled
         monthly_override_amount = self.monthly_payment_override
         fortnightly_override_amount = self.fortnightly_payment_override
@@ -290,7 +291,7 @@ class Mortgage:
         amortization_table_monthly = []
         amortization_table_fortnightly = []
 
-        # create balances
+        # balances
         balance_monthly = total_amount_borrowed
         balance_fortnightly = total_amount_borrowed
 
@@ -299,9 +300,22 @@ class Mortgage:
         accumulated_interest_fortnightly = 0
         accumulated_principal_payment_fortnightly = 0
 
+        # rate changes
+        current_interest = initial_interest
+        change_idx = 0
+        changes = self.interest_rate_changes
+        next_change = changes[change_idx] if changes else None
+
         # monthly
         for period in range(1, term * 12 + 1):
-            interest_payment = balance_monthly * (interest / 12) if balance_monthly > 0 else 0
+            # Check for interest rate change
+            if next_change and period > (next_change["effective_date"].year - self._start_date.year) * 12 + next_change[
+                "effective_date"].month - self._start_date.month:
+                current_interest = next_change["new_interest_rate"] / 100
+                change_idx += 1
+                next_change = changes[change_idx] if change_idx < len(changes) else None
+
+            interest_payment = balance_monthly * (current_interest / 12) if balance_monthly > 0 else 0
             principal_payment = self.initial_payment_breakdown[
                                     "estimated_repayment_monthly"] - interest_payment if interest_payment > 0 else 0
             extra_payment = (monthly_override_amount - self.initial_payment_breakdown[
@@ -328,8 +342,19 @@ class Mortgage:
                 break
 
         # fortnightly
+        current_interest = initial_interest
+        change_idx = 0
+        next_change = changes[change_idx] if changes else None
+
         for period in range(1, term * 26 + 1):
-            interest_payment = balance_fortnightly * (interest / 26) if balance_fortnightly > 0 else 0
+            # Check for interest rate change
+            if next_change and period > (next_change["effective_date"].year - self._start_date.year) * 26 + (
+                    next_change["effective_date"].month - self._start_date.month) * 2:
+                current_interest = next_change["new_interest_rate"] / 100
+                change_idx += 1
+                next_change = changes[change_idx] if change_idx < len(changes) else None
+
+            interest_payment = balance_fortnightly * (current_interest / 26) if balance_fortnightly > 0 else 0
             principal_payment = self.initial_payment_breakdown[
                                     "estimated_repayment_fortnightly"] - interest_payment if interest_payment > 0 else 0
             extra_payment = (fortnightly_override_amount - self.initial_payment_breakdown[
@@ -337,8 +362,7 @@ class Mortgage:
             total_payment = interest_payment + principal_payment + extra_payment
             new_balance = balance_fortnightly - principal_payment - extra_payment if balance_fortnightly > 0 else 0
             accumulated_interest_fortnightly += interest_payment if balance_fortnightly > 0 else 0
-            accumulated_principal_payment_fortnightly += (principal_payment +
-                                                          extra_payment) if interest_payment > 0 else 0
+            accumulated_principal_payment_fortnightly += principal_payment + extra_payment if interest_payment > 0 else 0
 
             amortization_table_fortnightly.append({
                 "Period": period,
@@ -389,9 +413,15 @@ class Mortgage:
             "amortization_schedule": self.amortization_schedule
         }
 
+    def add_interest_rate_change(self, new_interest_rate: float, effective_date: datetime):
+        self.interest_rate_changes.append({"interest_rate": new_interest_rate, "effective_date": effective_date})
+        self.interest_rate_changes.sort(key=lambda x: x["effective_date"])
+
+
 if __name__ == "__main__":
     M = Mortgage()
     try:
+        # Initial inputs
         M.gather_inputs(
             principal=810000,
             interest=5,
@@ -403,7 +433,7 @@ if __name__ == "__main__":
             fortnightly_payment_override=3000
         )
 
-        # Initial payment breakdown
+        # initial
         M.calculate_initial_payment_breakdown()
         print("Initial Payment Breakdown:")
         print("Total Amount Borrowed:", M.initial_payment_breakdown["total_amount_borrowed"])
@@ -434,7 +464,7 @@ if __name__ == "__main__":
         for row in amortization_schedule["monthly"][:5]:  # show first 5 data
             print(row)
 
-        # test balloon payment
+        # balloon payment
         M.make_balloon_payment(100000)
         print("\nAfter Balloon Payment of 100000:")
         M.calculate_mortgage_maturity()
@@ -447,7 +477,42 @@ if __name__ == "__main__":
         for row in amortization_schedule["monthly"][:5]:  # show first 5 data
             print(row)
 
-        # add comments
+        # interest rate change
+        new_interest_rate = 3.5
+        effective_date = datetime(2024, 5, 26)
+        M.interest_rate_changes = [{"new_interest_rate": new_interest_rate, "effective_date": effective_date}]
+        print("\nAfter Interest Rate Change to 3.5% on May 26, 2024:")
+        amortization_schedule = M.amortization_table()
+        print("Amortization Table (Monthly - first 10 periods after interest rate change):")
+        for row in amortization_schedule["monthly"][48:58]:  # show 10 periods around the interest rate change
+            print(row)
+
+        # multiple interest rate changes
+        M.interest_rate_changes = [
+            {"new_interest_rate": 3.5, "effective_date": datetime(2024, 5, 26)},
+            {"new_interest_rate": 4.0, "effective_date": datetime(2026, 5, 26)},
+            {"new_interest_rate": 4.5, "effective_date": datetime(2028, 5, 26)}
+        ]
+        print("\nAfter Multiple Interest Rate Changes:")
+        amortization_schedule = M.amortization_table()
+        print("Amortization Table (Monthly - first 10 periods after each interest rate change):")
+        for change in M.interest_rate_changes:
+            effective_period = (change["effective_date"].year - M._start_date.year) * 12 + change["effective_date"].month - M._start_date.month
+            print(f"Interest Rate Change to {change['new_interest_rate']}% effective on {change['effective_date']}:")
+            for row in amortization_schedule["monthly"][effective_period:effective_period+10]:
+                print(row)
+
+        #  immediate rate change
+        new_interest_rate = 2.5
+        effective_date = datetime(2024, 5, 26)
+        M.interest_rate_changes = [{"new_interest_rate": new_interest_rate, "effective_date": effective_date}]
+        print("\nAfter Immediate Interest Rate Change to 2.5% on May 26, 2024:")
+        amortization_schedule = M.amortization_table()
+        print("Amortization Table (Monthly - first 5 periods):")
+        for row in amortization_schedule["monthly"][:5]:  # show first 5 data
+            print(row)
+
+        # comments
         M.add_comment("Need extra money for insurance.")
         M.add_comment("Borrow more money for buying a car.")
         print("\nComments:")

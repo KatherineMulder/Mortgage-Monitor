@@ -74,6 +74,18 @@ def create_database():
         )
     """)
 
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS interest_rate_changes (
+        id SERIAL PRIMARY KEY,
+        mortgage_id INT REFERENCES mortgages(mortgage_id),
+        new_interest_rate FLOAT NOT NULL,
+        effective_date DATE NOT NULL
+);
+
+        """
+    )
+
     conn.commit()
     conn.close()
 

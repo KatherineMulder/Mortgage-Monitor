@@ -303,12 +303,26 @@
         </div>
 
             <hr>
-            <p class="card-text fs-4"><strong>Comments:</strong></p>
-            {% for comment in mortgage.comments %}
-                <p class="card-text fs-2">{{ comment }}</p>
-            {% endfor %}
-            <strong class="fs-4">Created At:</strong>
-            <div class="fs-2">{{ mortgage.created_at.strftime('%B %d, %Y %I:%M %p') }}</div>
+               <div class="container text-center">
+            <div class="row">
+                <div class="col">
+                    <p class="card-text fs-4"><strong>Comments:</strong></p>
+                    {% for comment in mortgage.comments %}
+                        <p class="card-text fs-2">{{ comment }}</p>
+                    {% endfor %}
+                </div>
+                <div class="col">
+                    <strong class="fs-4">Created At:</strong>
+                    <div class="fs-2">{{ mortgage.created_at.strftime('%B %d, %Y %I:%M %p') }}</div>
+                </div>
+                <div class="col">
+                    <strong class="fs-4">Updated Interest Rate:</strong>
+                    <div class="fs-2">{{ mortgage.latest_interest_rate }}% (Effective Date: {{ mortgage.latest_effective_date.strftime('%B %d, %Y') }})</div>
+                </div>
+            </div>
+        </div>
+
+
 
             <!-- amortization -->
             <br><br><br>

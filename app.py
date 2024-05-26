@@ -7,6 +7,7 @@ import pandas as pd
 from io import BytesIO
 import database
 from graphing import create_amortization_charts
+from datetime import datetime
 
 user_manager = UserManager()
 app = Flask(__name__)
@@ -123,9 +124,23 @@ def index():
             amortization_schedule = mortgage_obj.amortization_table()
             graph_html_monthly, graph_html_fortnightly = create_amortization_charts(amortization_schedule)
 
+            #  comments
             cursor.execute("SELECT comment FROM comments WHERE mortgage_id = %s", (mortgage_id,))
             comments = cursor.fetchall()
             comments = [comment[0] for comment in comments]
+
+            #  interest rate changes
+            cursor.execute("""
+                SELECT new_interest_rate, effective_date
+                FROM interest_rate_changes
+                WHERE mortgage_id = %s
+                ORDER BY effective_date DESC
+                LIMIT 1
+            """, (mortgage_id,))
+            interest_rate_change = cursor.fetchone()
+
+            latest_interest_rate = interest_rate_change[0] if interest_rate_change else interest
+            latest_effective_date = interest_rate_change[1] if interest_rate_change else start_date
 
             mortgage_details.append({
                 'mortgage_id': mortgage_id,
@@ -141,7 +156,9 @@ def index():
                 'comments': comments,
                 'created_at': start_date,
                 'graph_html_monthly': graph_html_monthly,
-                'graph_html_fortnightly': graph_html_fortnightly
+                'graph_html_fortnightly': graph_html_fortnightly,
+                'latest_interest_rate': latest_interest_rate,
+                'latest_effective_date': latest_effective_date
             })
 
     except Exception as e:
@@ -294,16 +311,20 @@ def update_mortgage(mortgage_id):
             balloon_payment = float(request.form.get("balloon_payment")) if request.form.get("balloon_payment") else 0.0
             new_comment = request.form.get("comment")
 
+            # new interest rate and effective date
+            new_interest_rate = float(request.form.get("new_interest_rate")) if request.form.get("new_interest_rate") else None
+            effective_date = request.form.get("effective_date") if request.form.get("effective_date") else datetime.now()
+
             logging.debug(
-                "Form data: mortgage_name=%s, principal=%s, interest=%s, term=%s, extra_costs=%s, deposit=%s, payment_override_enabled=%s, monthly_payment_override=%s, fortnightly_payment_override=%s, balloon_payment=%s, new_comment=%s",
+                "Form data: mortgage_name=%s, principal=%s, interest=%s, term=%s, extra_costs=%s, deposit=%s, payment_override_enabled=%s, monthly_payment_override=%s, fortnightly_payment_override=%s, balloon_payment=%s, new_comment=%s, new_interest_rate=%s, effective_date=%s",
                 mortgage_name, principal, interest, term, extra_costs, deposit, payment_override_enabled,
-                monthly_payment_override, fortnightly_payment_override, balloon_payment, new_comment)
+                monthly_payment_override, fortnightly_payment_override, balloon_payment, new_comment, new_interest_rate, effective_date)
 
             # fetch current principal for balloon payment calculation
             cursor.execute("SELECT principal FROM mortgages WHERE mortgage_id = %s", (mortgage_id,))
             current_principal = cursor.fetchone()[0]
 
-            # balloon payyment
+            # balloon payment
             if balloon_payment > 0:
                 mortgage = Mortgage()
                 mortgage.gather_inputs(
@@ -328,6 +349,15 @@ def update_mortgage(mortgage_id):
             """, (mortgage_name, principal, interest, term, extra_costs, deposit, payment_override_enabled,
                   monthly_payment_override, fortnightly_payment_override, mortgage_id))
 
+            # new interest rate change
+            # new interest rate change
+            if new_interest_rate and effective_date:
+                cursor.execute("""
+                               INSERT INTO interest_rate_changes (mortgage_id, new_interest_rate, effective_date)
+                               VALUES (%s, %s, %s)
+                           """, (mortgage_id, new_interest_rate, effective_date))
+                logging.debug("New interest rate change added: %s at %s", new_interest_rate, effective_date)
+
             # new comment if there is any
             if new_comment:
                 cursor.execute("""
@@ -339,7 +369,7 @@ def update_mortgage(mortgage_id):
             conn.commit()
             logging.debug("Mortgage updated successfully.")
             flash('Mortgage updated successfully!', 'success')
-            return redirect(url_for('update_mortgage', mortgage_id=mortgage_id))
+            return redirect(url_for('index'))  # Ensure redirection to index page
 
         else:
             logging.debug("Fetching mortgage details for mortgage ID: %s", mortgage_id)
@@ -368,7 +398,7 @@ def update_mortgage(mortgage_id):
                 'fortnightly_payment_override': mortgage[8]
             }
 
-            # fetch comment
+            # fetch comments
             cursor.execute("SELECT comment FROM comments WHERE mortgage_id = %s", (mortgage_id,))
             comments = cursor.fetchall()
             comments = [comment[0] for comment in comments]
