@@ -423,27 +423,50 @@ def update_mortgage(mortgage_id):
 @app.route("/remove_mortgage/<int:mortgage_id>", methods=["POST"])
 def remove_mortgage(mortgage_id):
     if 'username' not in session:
-        flash('You must be logged in to perform this action', 'danger')
         return redirect(url_for('login'))
 
-    conn = connect_to_database()
     try:
+        conn = connect_to_database()
         cursor = conn.cursor()
 
-        #  track the deletion process
-        logging.debug(f"Attempting to delete mortgage with ID {mortgage_id}")
+        # mortgage belongs to the logged-in user
+        cursor.execute("""
+            SELECT user_id FROM mortgages WHERE mortgage_id = %s
+        """, (mortgage_id,))
+        mortgage_user_id = cursor.fetchone()
 
+        if mortgage_user_id is None:
+            flash('Mortgage not found!', 'danger')
+            logging.error(f"Mortgage {mortgage_id} not found")
+            return redirect(url_for('index'))
+
+        user_id = session.get('user_id')
+        if not user_id:
+
+            cursor.execute("SELECT user_id FROM users WHERE username = %s", (session['username'],))
+            user_id = cursor.fetchone()[0]
+
+        if mortgage_user_id[0] != user_id:
+            flash('You do not have permission to delete this mortgage!', 'danger')
+            logging.error(f"User {user_id} does not have permission to delete mortgage {mortgage_id}")
+            return redirect(url_for('index'))
+
+        # delete comments associated with the mortgage
         cursor.execute("DELETE FROM comments WHERE mortgage_id = %s", (mortgage_id,))
+
+        # delete interest rate changes associated with the mortgage
+        cursor.execute("DELETE FROM interest_rate_changes WHERE mortgage_id = %s", (mortgage_id,))
+
+        # delete the mortgage
         cursor.execute("DELETE FROM mortgages WHERE mortgage_id = %s", (mortgage_id,))
 
         conn.commit()
-        logging.debug(f"Successfully deleted mortgage with ID {mortgage_id}")
-
-        flash('Mortgage removed successfully!', 'success')
+        flash('Mortgage deleted successfully!', 'success')
+        logging.info(f"Mortgage {mortgage_id} deleted successfully")
     except Exception as e:
         conn.rollback()
-        logging.error(f"Error occurred while deleting mortgage with ID {mortgage_id}: {str(e)}")
         flash(f"An error occurred: {str(e)}", 'danger')
+        logging.error(f"Error deleting mortgage {mortgage_id}: {str(e)}")
     finally:
         cursor.close()
         conn.close()
