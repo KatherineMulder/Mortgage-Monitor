@@ -27,28 +27,16 @@
         <h1 class="text-center">Update Mortgage</h1>
         <form action="{{ url_for('update_mortgage', mortgage_id=mortgage_id) }}" method="POST">
             <div class="mb-3">
-                <label for="mortgage_name" class="form-label">Mortgage Name:</label>
-                <input type="text" class="form-control" id="mortgage_name" name="mortgage_name" value="{{ mortgage.mortgage_name }}" required>
+                <label for="new_interest_rate" class="form-label">Updated Interest Rate (%):</label>
+                <input type="number" class="form-control" id="new_interest_rate" name="new_interest_rate" value="{{ '{:.2f}'.format(mortgage.interest) }}" step="0.01" required>
             </div>
             <div class="mb-3">
-                <label for="principal" class="form-label">Principal ($):</label>
-                <input type="number" class="form-control" id="principal" name="principal" value="{{ mortgage.principal }}" required>
+                <label for="extra_payment" class="form-label">Extra Payment ($):</label>
+                <input type="number" class="form-control" id="extra_payment" name="extra_payment" step="0.01">
             </div>
             <div class="mb-3">
-                <label for="interest" class="form-label">Interest (%):</label>
-                <input type="number" class="form-control" id="interest" name="interest" value="{{ mortgage.interest }}" step="0.01" required>
-            </div>
-            <div class="mb-3">
-                <label for="term" class="form-label">Term (Years):</label>
-                <input type="number" class="form-control" id="term" name="term" value="{{ mortgage.term }}" required>
-            </div>
-            <div class="mb-3">
-                <label for="deposit" class="form-label">Deposit ($):</label>
-                <input type="number" class="form-control" id="deposit" name="deposit" value="{{ mortgage.deposit }}">
-            </div>
-            <div class="mb-3">
-                <label for="extra_costs" class="form-label">Extra Costs ($):</label>
-                <input type="number" class="form-control" id="extra_costs" name="extra_costs" value="{{ mortgage.extra_costs }}">
+                <label for="balloon_payment" class="form-label">Balloon Payment ($):</label>
+                <input type="number" class="form-control" id="balloon_payment" name="balloon_payment" step="0.01">
             </div>
             <div class="form-check mb-3">
                 <input class="form-check-input" type="checkbox" id="payment_override_enabled" name="payment_override_enabled" {% if mortgage.payment_override_enabled %}checked{% endif %} onchange="toggleOverrideFields(this)">
@@ -56,27 +44,15 @@
             </div>
             <div class="mb-3">
                 <label for="monthly_payment_override" class="form-label">Monthly Payment Override ($):</label>
-                <input type="number" class="form-control" id="monthly_payment_override" name="monthly_payment_override" value="{{ mortgage.monthly_payment_override }}">
+                <input type="number" class="form-control" id="monthly_payment_override" name="monthly_payment_override" value="{{ '{:.2f}'.format(mortgage.monthly_payment_override) if mortgage.monthly_payment_override else '' }}" {% if not mortgage.payment_override_enabled %}disabled{% endif %}>
             </div>
             <div class="mb-3">
                 <label for="fortnightly_payment_override" class="form-label">Fortnightly Payment Override ($):</label>
-                <input type="number" class="form-control" id="fortnightly_payment_override" name="fortnightly_payment_override" value="{{ mortgage.fortnightly_payment_override }}">
-            </div>
-            <div class="mb-3">
-                <label for="balloon_payment" class="form-label">Balloon Payment ($):</label>
-                <input type="number" class="form-control" id="balloon_payment" name="balloon_payment" step="0.01">
+                <input type="number" class="form-control" id="fortnightly_payment_override" name="fortnightly_payment_override" value="{{ '{:.2f}'.format(mortgage.fortnightly_payment_override) if mortgage.fortnightly_payment_override else '' }}" {% if not mortgage.payment_override_enabled %}disabled{% endif %}>
             </div>
             <div class="mb-3">
                 <label for="comment" class="form-label">Add New Comment:</label>
                 <textarea class="form-control" id="comment" name="comment" rows="3"></textarea>
-            </div>
-            <div class="mb-3">
-                <label for="new_interest_rate" class="form-label">New Interest Rate (%):</label>
-                <input type="number" class="form-control" id="new_interest_rate" name="new_interest_rate" step="0.01">
-            </div>
-            <div class="mb-3">
-                <label for="effective_date" class="form-label">Effective Date:</label>
-                <input type="date" class="form-control" id="effective_date" name="effective_date">
             </div>
             <button type="submit" class="btn btn-primary">Update Mortgage</button>
         </form>
@@ -87,53 +63,6 @@
                 <li class="list-group-item">{{ comment }}</li>
             {% endfor %}
         </ul>
-    </div>
-
-    <!-- Update Password Modal -->
-    <div class="modal fade" id="updatePasswordModal" tabindex="-1" aria-labelledby="updatePasswordModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="updatePasswordModalLabel">Update Password</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="updatePasswordForm">
-                        <div class="mb-3">
-                            <label for="currentPassword" class="form-label">Current Password</label>
-                            <input type="password" class="form-control" id="currentPassword" name="current_password" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="newPassword" class="form-label">New Password</label>
-                            <input type="password" class="form-control" id="newPassword" name="new_password" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="confirmNewPassword" class="form-label">Confirm New Password</label>
-                            <input type="password" class="form-control" id="confirmNewPassword" name="confirm_new_password" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Update Password</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Remove Account Modal -->
-    <div class="modal fade" id="removeAccountModal" tabindex="-1" aria-labelledby="removeAccountModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="removeAccountModalLabel">Remove Account</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Are you sure you want to remove your account? This action cannot be undone.</p>
-                    <form id="removeAccountForm">
-                        <button type="submit" class="btn btn-danger">Remove Account</button>
-                    </form>
-                </div>
-            </div>
-        </div>
     </div>
 
     <script>
@@ -156,49 +85,6 @@
             var checkbox = document.getElementById("payment_override_enabled");
             toggleOverrideFields(checkbox);
         };
-
-        $(document).ready(function() {
-            $("#updatePasswordBtn").click(function() {
-                $("#updatePasswordModal").modal('show');
-            });
-
-            $("#updatePasswordForm").submit(function(event) {
-                event.preventDefault();
-                $.ajax({
-                    type: "POST",
-                    url: "{{ url_for('update_password') }}",
-                    data: $(this).serialize(),
-                    success: function(response) {
-                        alert(response.message);
-                        $("#updatePasswordModal").modal('hide');
-                    },
-                    error: function(xhr, status, error) {
-                        alert("Error: " + xhr.responseText);
-                    }
-                });
-            });
-
-            $("#removeAccountBtn").click(function() {
-                $("#removeAccountModal").modal('show');
-            });
-
-            $("#removeAccountForm").submit(function(event) {
-                event.preventDefault();
-                if (confirm("Are you sure you want to remove your account?")) {
-                    $.ajax({
-                        type: "POST",
-                        url: "{{ url_for('remove_user') }}",
-                        success: function(response) {
-                            alert(response.message);
-                            window.location.href = "{{ url_for('login') }}";
-                        },
-                        error: function(xhr, status, error) {
-                            alert("Error: " + xhr.responseText);
-                        }
-                    });
-                }
-            });
-        });
     </script>
 </body>
 </html>
