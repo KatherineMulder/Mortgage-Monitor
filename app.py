@@ -24,17 +24,17 @@ def root():
 
 def initialize_database():
     if not database.check_database_connection():
-        print("Database not initialized. Creating database...")
+        print("database not initialized. Creating database...")
         database.create_database()
         time.sleep(5)  # Wait for 5 seconds to ensure database creation
         if not database.check_database_connection():
-            print("Database creation failed.")
+            print("database creation failed.")
             return False
         else:
-            print("Database created successfully.")
+            print("database created successfully.")
             return True
     else:
-        print("Database already initialized.")
+        print("database already initialized.")
         return True
 
 
@@ -126,14 +126,18 @@ def index():
         cursor = conn.cursor()
         cursor.execute("""
             SELECT mortgage_id, mortgage_name, principal, interest, term, extra_costs, deposit, 
-                   payment_override_enabled, monthly_payment_override, fortnightly_payment_override
+                   payment_override_enabled, monthly_payment_override, fortnightly_payment_override,
+                   start_date, comments, created_at
             FROM mortgages 
             WHERE user_id = (SELECT user_id FROM users WHERE username = %s)
         """, (username,))
         mortgages = cursor.fetchall()
 
         for mortgage in mortgages:
-            mortgage_id, mortgage_name, principal, interest, term, extra_costs, deposit, payment_override_enabled, monthly_payment_override, fortnightly_payment_override = mortgage
+            (mortgage_id, mortgage_name, principal, interest, term, extra_costs, deposit,
+             payment_override_enabled, monthly_payment_override, fortnightly_payment_override,
+             start_date, comments, created_at) = mortgage
+
             mortgage_obj = Mortgage(mortgage_name, float(interest), term, float(principal), float(deposit),
                                     float(extra_costs))
             mortgage_obj.gather_inputs(float(principal), float(interest), term, float(extra_costs), float(deposit),
@@ -144,10 +148,6 @@ def index():
             mortgage_obj.calculate_mortgage_maturity()
             amortization_schedule = mortgage_obj.amortization_table()
             graph_html_monthly, graph_html_fortnightly = create_amortization_charts(amortization_schedule)
-
-            cursor.execute("SELECT comment FROM comments WHERE mortgage_id = %s", (mortgage_id,))
-            comments = cursor.fetchall()
-            comments = [comment[0] for comment in comments]
 
             cursor.execute("""
                 SELECT new_interest_rate, effective_date
@@ -172,12 +172,13 @@ def index():
                 'initial_payment_breakdown': mortgage_obj.get_initial_payment_breakdown(),
                 'mortgage_maturity': mortgage_obj.mortgage_maturity,
                 'amortization_schedule': amortization_schedule,
-                'comments': comments,
-                'created_at': datetime.now(),
                 'graph_html_monthly': graph_html_monthly,
                 'graph_html_fortnightly': graph_html_fortnightly,
                 'latest_interest_rate': latest_interest_rate,
                 'latest_effective_date': latest_effective_date,
+                'start_date': start_date.strftime("%Y-%m-%d") if start_date else "N/A",
+                'comments': comments,
+                'created_at': created_at.strftime("%Y-%m-%d %H:%M:%S") if created_at else "N/A",
             })
 
     except Exception as e:
@@ -220,15 +221,16 @@ def new_mortgage():
             payment_override_enabled = 'payment_override_enabled' in request.form
             monthly_payment_override = float(request.form.get("monthly_payment_override", "0.0")) if payment_override_enabled else None
             fortnightly_payment_override = float(request.form.get("fortnightly_payment_override", "0.0")) if payment_override_enabled else None
-            comment = request.form.get("comment", "")
+            comments = request.form.get("comments", "")
+            start_date = request.form.get("start_date")
+            created_at = datetime.now()
 
             principal_increment_value = request.form.get("principal_increment_value")
             principal_increment_value = float(principal_increment_value) if principal_increment_value else 0
             increment_results['principal_increment_value'] = principal_increment_value
 
             number_of_principal_increments = request.form.get("number_of_principal_increments")
-            number_of_principal_increments = int(
-                number_of_principal_increments) if number_of_principal_increments else 0
+            number_of_principal_increments = int(number_of_principal_increments) if number_of_principal_increments else 0
             increment_results['number_of_principal_increments'] = number_of_principal_increments
 
             interest_rate_increment_value = request.form.get("interest_rate_increment_value")
@@ -236,8 +238,7 @@ def new_mortgage():
             increment_results['interest_rate_increment_value'] = interest_rate_increment_value
 
             number_of_interest_rate_increments = request.form.get("number_of_interest_rate_increments")
-            number_of_interest_rate_increments = int(
-                number_of_interest_rate_increments) if number_of_interest_rate_increments else 0
+            number_of_interest_rate_increments = int(number_of_interest_rate_increments) if number_of_interest_rate_increments else 0
             increment_results['number_of_interest_rate_increments'] = number_of_interest_rate_increments
 
         except ValueError as e:
@@ -246,7 +247,7 @@ def new_mortgage():
 
         if action == 'calculate' or action == 'recalculate':
             mortgage = Mortgage(
-                mortgage_name, interest, term, principal, deposit, extra_costs, comment,
+                mortgage_name, interest, term, principal, deposit, extra_costs, comments,
                 payment_override_enabled, monthly_payment_override, fortnightly_payment_override
             )
             mortgage.calculate_initial_payment_breakdown()
@@ -272,7 +273,7 @@ def new_mortgage():
                 'new_mortgage.html', results=results, mortgage_name=mortgage_name, principal=principal,
                 interest=interest, term=term, extra_costs=extra_costs, deposit=deposit,
                 payment_override_enabled=payment_override_enabled, monthly_payment_override=monthly_payment_override,
-                fortnightly_payment_override=fortnightly_payment_override, comment=comment,
+                fortnightly_payment_override=fortnightly_payment_override, comments=comments,
                 principal_increment_value=principal_increment_value,
                 number_of_principal_increments=number_of_principal_increments,
                 interest_rate_increment_value=interest_rate_increment_value,
@@ -291,24 +292,20 @@ def new_mortgage():
 
                     logging.info("Inserting new mortgage for user_id: %d", user_id)
                     cursor.execute("""
-                        INSERT INTO mortgages (user_id, mortgage_name, principal, interest, term, extra_costs, deposit, payment_override_enabled, monthly_payment_override, fortnightly_payment_override, principal_increment_value, number_of_principal_increments, interest_rate_increment_value, number_of_interest_rate_increments)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING mortgage_id
+                        INSERT INTO mortgages (user_id, mortgage_name, principal, interest, term, extra_costs, deposit, 
+                        payment_override_enabled, monthly_payment_override, fortnightly_payment_override, start_date, comments, 
+                        created_at, principal_increment_value, number_of_principal_increments, interest_rate_increment_value, 
+                        number_of_interest_rate_increments)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING mortgage_id
                     """, (
                         user_id, mortgage_name, principal, interest, term, extra_costs, deposit,
-                        payment_override_enabled, monthly_payment_override, fortnightly_payment_override,
-                        principal_increment_value, number_of_principal_increments,
+                        payment_override_enabled, monthly_payment_override, fortnightly_payment_override, start_date,
+                        comments, created_at, principal_increment_value, number_of_principal_increments,
                         interest_rate_increment_value, number_of_interest_rate_increments
                     ))
 
                     mortgage_id = cursor.fetchone()[0]
                     logging.info("Mortgage saved with id: %d", mortgage_id)
-
-                    if comment:
-                        logging.info("Inserting comment for mortgage_id: %d", mortgage_id)
-                        cursor.execute("""
-                            INSERT INTO comments (mortgage_id, user_id, comment)
-                            VALUES (%s, %s, %s)
-                        """, (mortgage_id, user_id, comment))
 
                     conn.commit()
                     flash('Mortgage saved successfully!', 'success')
@@ -361,7 +358,7 @@ def update_mortgage(mortgage_id):
         borrowed_amount = float(request.form.get("borrowed_amount", 0))
         updated_monthly_payment = float(request.form.get("updated_monthly_payment", 0))
         updated_fortnightly_payment = float(request.form.get("updated_fortnightly_payment", 0))
-        new_comment = request.form.get("new_comment", "")
+        new_comments = request.form.get("new_comments", "")
 
         try:
             mortgage.update_mortgage(
@@ -373,11 +370,6 @@ def update_mortgage(mortgage_id):
                 updated_fortnightly_payment=updated_fortnightly_payment
             )
 
-            if new_comment:
-                cursor.execute("""
-                    INSERT INTO comments (mortgage_id, user_id, comment)
-                    VALUES (%s, %s, %s)
-                """, (mortgage_id, session['user_id'], new_comment))
 
             cursor.execute("""
                 UPDATE mortgages
@@ -421,10 +413,8 @@ def remove_mortgage(mortgage_id):
         conn = connect_to_database()
         cursor = conn.cursor()
 
-        # mortgage belongs to the logged-in user
-        cursor.execute("""
-            SELECT user_id FROM mortgages WHERE mortgage_id = %s
-        """, (mortgage_id,))
+        # Verify that the mortgage belongs to the logged-in user
+        cursor.execute("SELECT user_id FROM mortgages WHERE mortgage_id = %s", (mortgage_id,))
         mortgage_user_id = cursor.fetchone()
 
         if mortgage_user_id is None:
@@ -442,8 +432,8 @@ def remove_mortgage(mortgage_id):
             logging.error(f"User {user_id} does not have permission to delete mortgage {mortgage_id}")
             return redirect(url_for('index'))
 
-        cursor.execute("DELETE FROM comments WHERE mortgage_id = %s", (mortgage_id,))
-        cursor.execute("DELETE FROM interest_rate_changes WHERE mortgage_id = %s", (mortgage_id,))
+        # Delete related records first
+        cursor.execute("DELETE FROM transactions WHERE mortgage_id = %s", (mortgage_id,))
         cursor.execute("DELETE FROM mortgages WHERE mortgage_id = %s", (mortgage_id,))
         conn.commit()
         flash('Mortgage deleted successfully!', 'success')

@@ -6,7 +6,7 @@ class Mortgage:
     def __init__(self, mortgage_name: str, initial_interest: float, initial_term: int, initial_principal: float,
                  deposit: float, extra_costs: float, comments: Optional[str] = None, payment_override_enabled: bool = False,
                  monthly_payment_override: Optional[float] = None, fortnightly_payment_override: Optional[float] = None,
-                 start_date: Optional[datetime] = None):
+                 start_date: Optional[datetime] = None , created_at: Optional[datetime] = None):
         self._mortgage_id: Optional[int] = None
         self._mortgage_name: str = mortgage_name
         self._initial_interest: float = initial_interest / 100
@@ -15,6 +15,7 @@ class Mortgage:
         self._deposit: float = deposit
         self._extra_costs: float = extra_costs
         self._start_date: datetime = start_date if start_date else datetime.now()
+        self._created_at: Optional[datetime] = created_at
         self._comments: str = comments if comments else ""
         self.payment_override_enabled: bool = payment_override_enabled
         self.monthly_payment_override: Optional[float] = monthly_payment_override
@@ -32,7 +33,7 @@ class Mortgage:
     @start_date.setter
     def start_date(self, value: datetime) -> None:
         if value is None or not isinstance(value, datetime):
-            raise ValueError("Start date must be a datetime object")
+            raise ValueError("start date must be a datetime ")
         self._start_date = value
 
     @property
@@ -144,66 +145,6 @@ class Mortgage:
         self.monthly_payment_override = monthly_payment_override
         self.fortnightly_payment_override = fortnightly_payment_override
 
-    def update_mortgage(self, new_interest_rate: float, current_principal: float, remaining_term_months: int,
-                        extra_payment: Optional[float] = None, updated_monthly_payment: Optional[float] = None,
-                        updated_fortnightly_payment: Optional[float] = None):
-        self._initial_principal = current_principal
-        self._initial_interest = new_interest_rate / 100
-        self._initial_term = remaining_term_months // 12
-
-        transaction = {
-            "transaction_date": datetime.now(),
-            "current_principal": current_principal,
-            "interest_rate": new_interest_rate,
-            "remaining_term_months": remaining_term_months,
-            "extra_payment": extra_payment,
-            "updated_monthly_payment": updated_monthly_payment,
-            "updated_fortnightly_payment": updated_fortnightly_payment
-        }
-
-        self.historical_transactions.append(transaction)
-        self.calculate_initial_payment_breakdown()
-        self.calculate_mortgage_maturity()
-        self.amortization_table()
-
-
-    def make_balloon_payment(self, lump_sum: float):
-        if lump_sum <= 0:
-            raise ValueError("Lump sum payment must be greater than zero")
-        if lump_sum > self._initial_principal:
-            raise ValueError("Lump sum payment cannot be greater than the remaining principal")
-        self._initial_principal -= lump_sum
-        self.historical_transactions.append({
-            "transaction_date": datetime.now(),
-            "transaction_type": "Balloon Payment",
-            "amount": lump_sum,
-            "description": "Made a balloon payment"
-        })
-        self.calculate_initial_payment_breakdown()
-        self.calculate_mortgage_maturity()
-        self.amortization_table()
-
-    def apply_extra_costs(self, extra_costs: float):
-        self._initial_principal += extra_costs
-        self.historical_transactions.append({
-            "transaction_date": datetime.now(),
-            "transaction_type": "Extra Costs",
-            "amount": extra_costs,
-            "description": "Added extra costs to principal"
-        })
-        self.calculate_initial_payment_breakdown()
-        self.calculate_mortgage_maturity()
-        self.amortization_table()
-
-
-
-
-    def delete_mortgage(self):
-        """Delete the mortgage by resetting all attributes."""
-        self.__init__(self._mortgage_name, self._initial_interest * 100, self._initial_term, self._initial_principal,
-                      self._deposit, self._extra_costs, self._comments, self.payment_override_enabled,
-                      self.monthly_payment_override, self.fortnightly_payment_override)
-
     def calculate_projected_payment(self, principal: float, interest_rate: float, term: int, frequency: str):
         if frequency == "monthly":
             rate = interest_rate / 12 / 100
@@ -256,6 +197,7 @@ class Mortgage:
 
         total_amount_borrowed = principal - deposit + extra_costs
 
+        # annual interest rate to monthly interest rate
         monthly_rate = interest / 12
         estimated_repayment_monthly = total_amount_borrowed * (monthly_rate / (1 - (1 + monthly_rate) ** -(term * 12)))
         initial_interest_monthly = total_amount_borrowed * monthly_rate
@@ -263,6 +205,7 @@ class Mortgage:
         initial_extra_monthly = monthly_payment_override - estimated_repayment_monthly if payment_override_enabled else 0
         total_repayment_monthly = initial_interest_monthly + initial_principal_monthly + initial_extra_monthly
 
+        # fortnightly
         fortnightly_rate = interest / 26
         estimated_repayment_fortnightly = total_amount_borrowed * (
                 fortnightly_rate / (1 - (1 + fortnightly_rate) ** -(term * 26)))
@@ -465,14 +408,78 @@ class Mortgage:
         }
         return self.amortization_schedule
 
-    def add_comment(self, comment: str):
-        if not self._comments:
-            self._comments = comment
-        else:
-            self._comments += f"; {comment}"
+    def update_mortgage(self, new_interest_rate: float, current_principal: float, remaining_term_months: int,
+                        extra_payment: Optional[float] = None, updated_monthly_payment: Optional[float] = None,
+                        updated_fortnightly_payment: Optional[float] = None):
+        self._initial_principal = current_principal
+        self._initial_interest = new_interest_rate / 100
+        self._initial_term = remaining_term_months // 12
+        self.payment_override_enabled = True if updated_monthly_payment or updated_fortnightly_payment else False
+        self.monthly_payment_override = updated_monthly_payment
+        self.fortnightly_payment_override = updated_fortnightly_payment
 
-    def get_comments(self):
-        return self._comments.split("; ")
+        transaction = {
+            "transaction_date": datetime.now(),
+            "transaction_type": "Update",
+            "current_principal": current_principal,
+            "interest_rate": new_interest_rate,
+            "remaining_term_months": remaining_term_months,
+            "extra_payment": extra_payment,
+            "updated_monthly_payment": updated_monthly_payment,
+            "updated_fortnightly_payment": updated_fortnightly_payment,
+            "description": "Updated mortgage information"
+        }
+
+        self.historical_transactions.append(transaction)
+
+        # recalculate based on the updated information
+        self.calculate_initial_payment_breakdown()
+        self.calculate_mortgage_maturity()
+        self.amortization_table()
+
+    def make_balloon_payment(self, lump_sum: float):
+        if lump_sum <= 0:
+            raise ValueError("Lump sum payment must be greater than zero")
+        if lump_sum > self._initial_principal:
+            raise ValueError("Lump sum payment cannot be greater than the remaining principal")
+        self._initial_principal -= lump_sum
+        transaction = {
+            "transaction_date": datetime.now(),
+            "transaction_type": "Balloon Payment",
+            "amount": lump_sum,
+            "current_principal": self._initial_principal,
+            "description": "Made a balloon payment"
+        }
+        self.historical_transactions.append(transaction)
+        self.calculate_initial_payment_breakdown()
+        self.calculate_mortgage_maturity()
+        self.amortization_table()
+
+    def apply_extra_costs(self, extra_costs: float):
+        if extra_costs <= 0:
+            raise ValueError("Extra costs must be greater than zero")
+        self._initial_principal += extra_costs
+        transaction = {
+            "transaction_date": datetime.now(),
+            "transaction_type": "Extra Costs",
+            "amount": extra_costs,
+            "current_principal": self._initial_principal,
+            "description": "Added extra costs to principal"
+        }
+        self.historical_transactions.append(transaction)
+        self.calculate_initial_payment_breakdown()
+        self.calculate_mortgage_maturity()
+        self.amortization_table()
+
+    def add_comments(self, comments: str):
+        self.historical_transactions.append({
+            "transaction_date": datetime.now(),
+            "transaction_type": "Comments",
+            "description": comments
+        })
+
+    def get_comments(self) -> List[str]:
+        return [t["description"] for t in self.historical_transactions if t["transaction_type"] == "Comments"]
 
     def get_initial_payment_breakdown(self):
         return self.initial_payment_breakdown
@@ -498,14 +505,13 @@ class Mortgage:
 
     def add_interest_rate_change(self, new_interest_rate: float, effective_date: datetime):
         self.interest_rate_changes.append({"new_interest_rate": new_interest_rate, "effective_date": effective_date})
-        self.interest_rate_changes.sort(key=lambda x: x["effective_date"])
 
     def get_amortization_schedules(self):
         return self.amortization_table()
 
 
 if __name__ == "__main__":
-    M = Mortgage("Test Mortgage", 5, 20, 810000, 50000, 10000, "Initial setup")
+    M = Mortgage("Test Mortgage", 5, 20, 810000, 50000, 10000, "initial setup")
     try:
         M.gather_inputs(
             principal=810000,
@@ -518,23 +524,45 @@ if __name__ == "__main__":
             fortnightly_payment_override=3000
         )
 
+        # initial
         M.calculate_initial_payment_breakdown()
         print("Initial Payment Breakdown:")
         for key, value in M.get_initial_payment_breakdown().items():
             print(f"{key}: {value}")
         print()
 
+        # maturity
         M.calculate_mortgage_maturity()
         print("Mortgage Maturity Details:")
         for key, value in M.mortgage_maturity.items():
             print(f"{key}: {value}")
         print()
 
+        # amortization table
         amortization_schedule = M.amortization_table()
         print("Amortization Table (Monthly - first 5 periods):")
         for row in amortization_schedule["monthly"][:5]:  # show first 5 data
             print(row)
 
+        M.update_mortgage(new_interest_rate=4.5, current_principal=750000, remaining_term_months=15 * 12,
+                          extra_payment=5000, updated_monthly_payment=6500)
+        print("\nAfter Updating Mortgage:")
+        print("Updated Payment Breakdown:")
+        for key, value in M.initial_payment_breakdown.items():
+            print(f"{key}: {value}")
+        print()
+
+        print("Updated Mortgage Maturity Details:")
+        for key, value in M.mortgage_maturity["monthly"].items():
+            print(f"{key}: {value}")
+        print()
+
+        print("Updated Amortization Table (Monthly - first 5 periods):")
+        amortization_schedule = M.amortization_table()
+        for row in amortization_schedule["monthly"][:5]:
+            print(row)
+
+        # balloon
         M.make_balloon_payment(100000)
         print("\nAfter Balloon Payment of 100000:")
         M.calculate_mortgage_maturity()
@@ -542,10 +570,10 @@ if __name__ == "__main__":
             print(f"{key}: {value}")
         amortization_schedule = M.amortization_table()
         print("Amortization Table (Monthly - first 5 periods):")
-        for row in amortization_schedule["monthly"][:5]:  # show first 5 data
+        for row in amortization_schedule["monthly"][:5]:
             print(row)
 
-        # Interest rate change
+        # interest rate change
         new_interest_rate = 3.5
         effective_date = datetime(2024, 5, 26)
         M.add_interest_rate_change(new_interest_rate, effective_date)
@@ -564,9 +592,11 @@ if __name__ == "__main__":
         amortization_schedule = M.amortization_table()
         print("Amortization Table (Monthly - first 10 periods after each interest rate change):")
         for change in M.interest_rate_changes:
-            effective_period = (change["effective_date"].year - M._start_date.year) * 12 + change["effective_date"].month - M._start_date.month
-            print(f"Interest Rate Change to {change['new_interest_rate']}% effective on {change['effective_date']}:")
-            for row in amortization_schedule["monthly"][effective_period:effective_period+10]:
+            effective_period = (change["effective_date"].year - M._start_date.year) * 12 + change[
+                "effective_date"].month - M._start_date.month
+            print(
+                f"Interest Rate Change to {change['new_interest_rate']}% effective on {change['effective_date']}:")
+            for row in amortization_schedule["monthly"][effective_period:effective_period + 10]:
                 print(row)
 
         new_interest_rate = 2.5
@@ -578,14 +608,15 @@ if __name__ == "__main__":
         for row in amortization_schedule["monthly"][:5]:  # show first 5 data
             print(row)
 
-        M.add_comment("Need extra money for insurance.")
-        M.add_comment("Borrow more money for buying a car.")
+        # CRUD comment
+        M.add_comments("Need extra money for insurance.")
+        M.add_comments("Borrow more money for buying a car.")
         print("\nComments:")
         comments = M.get_comments()
         for comment in comments:
-            print(comment)
+            print(comments)
 
-        # Scenarios
+        # scenarios for the increment
         scenarios = M.generate_planning_scenarios(
             principal_increment=3000.00,
             principal_increments=15,
@@ -604,7 +635,7 @@ if __name__ == "__main__":
                 row.append(f"${scenario['monthly_payments'][i]:,.2f}")
             print("\t".join(row))
 
-        print("\nProjected Payments Per Fortnight")
+        print("\nprojected payments fortnight")
         print("\t".join(header))
 
         for i in range(16):
@@ -614,4 +645,4 @@ if __name__ == "__main__":
             print("\t".join(row))
 
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f"error: {e}")

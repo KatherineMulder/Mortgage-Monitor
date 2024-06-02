@@ -91,41 +91,42 @@ def create_database():
         """)
 
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS transactions (
-                id SERIAL PRIMARY KEY,
-                mortgage_id INTEGER REFERENCES mortgages(mortgage_id),
-                transaction_date DATE NOT NULL DEFAULT CURRENT_DATE,
-                current_principal NUMERIC(15, 2) NOT NULL,
-                interest_rate NUMERIC(5, 2) NOT NULL,
-                remaining_term_months INTEGER NOT NULL,
-                extra_payment NUMERIC(15, 2),
-                updated_monthly_payment NUMERIC(15, 2),
-                updated_fortnightly_payment NUMERIC(15, 2),
-                balloon_payment NUMERIC(15, 2),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
+                   CREATE TABLE IF NOT EXISTS transactions (
+                    transaction_id SERIAL PRIMARY KEY,
+                    mortgage_id INTEGER REFERENCES mortgages(mortgage_id),
+                    transaction_date TIMESTAMP NOT NULL,
+                    transaction_type VARCHAR(50),
+                    current_principal NUMERIC,
+                    interest_rate NUMERIC,
+                    remaining_term_months INTEGER,
+                    extra_payment NUMERIC,
+                    updated_monthly_payment NUMERIC,
+                    updated_fortnightly_payment NUMERIC,
+                    amount NUMERIC,
+                    description TEXT
+                   )
+               """)
 
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS amortization_schedules (
-                id SERIAL PRIMARY KEY,
-                mortgage_id INTEGER REFERENCES mortgages(mortgage_id),
-                payment_date DATE NOT NULL,
-                principal_payment NUMERIC(15, 2) NOT NULL,
-                interest_payment NUMERIC(15, 2) NOT NULL,
-                remaining_balance NUMERIC(15, 2) NOT NULL
-            )
-        """)
+        # cursor.execute("""
+        #     CREATE TABLE IF NOT EXISTS amortization_schedules (
+        #         id SERIAL PRIMARY KEY,
+        #         mortgage_id INTEGER REFERENCES mortgages(mortgage_id),
+        #         payment_date DATE NOT NULL,
+        #         principal_payment NUMERIC(15, 2) NOT NULL,
+        #         interest_payment NUMERIC(15, 2) NOT NULL,
+        #         remaining_balance NUMERIC(15, 2) NOT NULL
+        #     )
+        # """)
 
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS comments (
-                id SERIAL PRIMARY KEY,
-                mortgage_id INTEGER REFERENCES mortgages(mortgage_id),
-                user_id INTEGER REFERENCES users(user_id),
-                comment TEXT NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
+        # cursor.execute("""
+        #     CREATE TABLE IF NOT EXISTS comments (
+        #         id SERIAL PRIMARY KEY,
+        #         mortgage_id INTEGER REFERENCES mortgages(mortgage_id),
+        #         user_id INTEGER REFERENCES users(user_id),
+        #         comment TEXT NOT NULL,
+        #         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        #     )
+        # """)
 
         conn.commit()
         cursor.close()

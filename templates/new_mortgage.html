@@ -56,8 +56,12 @@
                             <input type="number" class="form-control fs-4" id="extra_costs" name="extra_costs" value="{{ extra_costs }}">
                         </div>
                         <div class="mb-3">
-                            <label for="comment" class="form-label fs-4">Comment:</label>
-                            <textarea class="form-control fs-4" id="comment" name="comment">{{ comment }}</textarea>
+                            <label for="start_date" class="form-label fs-4">Start Date:</label>
+                            <input type="date" class="form-control fs-4" id="start_date" name="start_date" value="{{ start_date }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="comments" class="form-label fs-4">Comments:</label>
+                            <textarea class="form-control fs-4" id="comments" name="comments">{{ comments }}</textarea>
                         </div>
                         <h3>Adjust the principal and interest rate increments to explore different mortgage repayment scenarios.</h3>
                         <div class="mb-3">
@@ -115,12 +119,6 @@
                         <p class="fs-4 mb-3">Interest Rate Increment Value: {{ results.increment_results.interest_rate_increment_value }} %</p>
                         <p class="fs-4 mb-3">Number of Interest Rate Increments: {{ results.increment_results.number_of_interest_rate_increments }}</p>
 
-                        {% if results.comments %}
-                            <h3>Comment</h3>
-                            {% for comment in results.comments %}
-                                <p class="fs-4">{{ comment }}</p>
-                            {% endfor %}
-                        {% endif %}
                         <div class="d-flex justify-content-between mt-3">
                             <button type="button" class="btn btn-secondary fs-4" onclick="clearForm()">Clear Form</button>
                         </div>
@@ -138,7 +136,7 @@
                         <input class="fs-4" type="hidden" name="term" value="{{ term }}">
                         <input class="fs-4" type="hidden" name="deposit" value="{{ deposit }}">
                         <input class="fs-4" type="hidden" name="extra_costs" value="{{ extra_costs }}">
-                        <input class="fs-4" type="hidden" name="comment" value="{{ comment }}">
+                        <input class="fs-4" type="hidden" name="comments" value="{{ comments }}">
                         <input class="fs-4" type="hidden" name="principal_increment_value" value="{{ principal_increment_value }}">
                         <input class="fs-4" type="hidden" name="number_of_principal_increments" value="{{ number_of_principal_increments }}">
                         <input class="fs-4" type="hidden" name="interest_rate_increment_value" value="{{ interest_rate_increment_value }}">
