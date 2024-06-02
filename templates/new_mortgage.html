@@ -29,7 +29,7 @@
                 <div class="main_mortgage p-4 border bg-light">
                     <h1 class="text-center">Calculate Mortgage</h1>
                     <p class="text-left text-secondary fs-4">After calculating your estimated payment, you can input an override amount, provided it is higher than the estimated repayment. Once you're satisfied with your entries, confirm the mortgage, and your details will be displayed on the main page.</p>
-                    <form id="mortgageForm" action="{{ url_for('new_mortgage') }}" method="POST">
+                    <form id="mortgageForm" method="POST">
                         <input type="hidden" name="action" id="action" value="calculate">
                         <div class="mb-3">
                             <label for="mortgage_name" class="form-label fs-4">Mortgage Name:</label>
@@ -78,8 +78,7 @@
 
                         <div class="d-flex justify-content-between">
                             <button type="button" class="btn btn-secondary fs-4" onclick="clearForm()">Clear</button>
-                            <button type="button" class="btn btn-primary fs-4" onclick="setActionAndSubmit('calculate', 'mortgageForm')">Calculate</button>
-                            <button type="button" class="btn btn-primary fs-4" onclick="setActionAndSubmit('save_mortgage', 'mortgageForm')">Save Mortgage</button>
+                            <button type="submit" class="btn btn-primary fs-4" onclick="document.getElementById('action').value='calculate'">Calculate</button>
                         </div>
                     </form>
                 </div>
@@ -131,7 +130,7 @@
             <div class="col-lg-4 col-md-6 col-sm-12">
                 <div class="override p-4 border bg-light">
                     <p class="text-danger p-3 mb-2 bg-danger text-white fs-4">NOTE: The override amount must be higher than the estimated repayment.</p>
-                    <form id="overrideForm" action="{{ url_for('new_mortgage') }}" method="POST">
+                    <form id="overrideForm" method="POST">
                         <input class="fs-4" type="hidden" name="mortgage_name" value="{{ mortgage_name }}">
                         <input class="fs-4" type="hidden" name="principal" value="{{ principal }}">
                         <input class="fs-4" type="hidden" name="interest" value="{{ interest }}">
@@ -143,7 +142,7 @@
                         <input class="fs-4" type="hidden" name="number_of_principal_increments" value="{{ number_of_principal_increments }}">
                         <input class="fs-4" type="hidden" name="interest_rate_increment_value" value="{{ interest_rate_increment_value }}">
                         <input class="fs-4" type="hidden" name="number_of_interest_rate_increments" value="{{ number_of_interest_rate_increments }}">
-                        <input type="hidden" name="action" id="override_action" value="override">
+
                         <div class="form-check mb-3">
                             <input type="checkbox" class="form-check-input fs-4" id="payment_override_enabled" name="payment_override_enabled" onchange="toggleOverrideFields(this)" {% if payment_override_enabled %} checked {% endif %}>
                             <label class="form-check-label fs-4" for="payment_override_enabled">Enable Payment Override</label>
@@ -157,9 +156,9 @@
                             <input type="number" class="form-control fs-4" id="fortnightly_payment_override" name="fortnightly_payment_override" step="0.01" {% if not payment_override_enabled %} disabled {% endif %} value="{{ fortnightly_payment_override }}">
                         </div>
                         <div class="d-flex justify-content-between">
-                            <button type="button" class="btn btn-secondary fs-4" onclick="clearOverrideForm()">Clear Override</button>
-                            <button type="button" class="btn btn-secondary fs-4" onclick="submitForm('override', 'overrideForm')">Recalculate with Override</button>
-                            <button type="button" class="btn btn-primary fs-4" onclick="setActionAndSubmit('save_mortgage', 'overrideForm')">Save Mortgage</button>
+                            <button type="button" class="btn btn-secondary" onclick="clearOverrideForm()">Clear Override</button>
+                            <button type="button" class="btn btn-secondary" onclick="submitForm('recalculate')">Recalculate with Override</button>
+                            <button type="button" class="btn btn-primary" onclick="submitForm('save_mortgage')">Save Mortgage</button>
                         </div>
                     </form>
                 </div>
@@ -256,13 +255,9 @@
                 fortnightlyOverrideField.value = "";
             }
         }
-        function setActionAndSubmit(action) {
-            document.getElementById('action').value = action;
-            document.getElementById('mortgageForm').submit();
-        }
 
-        function submitForm(action, formId) {
-            var form = document.getElementById(formId);
+        function submitForm(action) {
+            var form = document.getElementById("overrideForm");
             var actionInput = document.createElement("input");
             actionInput.type = "hidden";
             actionInput.name = "action";

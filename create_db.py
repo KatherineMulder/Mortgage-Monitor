@@ -1,9 +1,9 @@
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
+
 def create_database():
     try:
-        #  default 'postgres' database
         default_conn = psycopg2.connect(
             dbname="postgres",
             user="postgres",
@@ -14,7 +14,6 @@ def create_database():
         default_conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         default_cursor = default_conn.cursor()
 
-        # Check if mortgage_calculator database exists, create if not
         default_cursor.execute("SELECT 1 FROM pg_catalog.pg_database WHERE datname = 'mortgage_calculator'")
         database_exists = default_cursor.fetchone()
 
@@ -31,7 +30,6 @@ def create_database():
         return
 
     try:
-        # connect to the mortgage_calculator database
         conn = psycopg2.connect(
             dbname="mortgage_calculator",
             user="postgres",
@@ -42,7 +40,6 @@ def create_database():
         conn.autocommit = True
         cursor = conn.cursor()
 
-        # Create users table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 user_id SERIAL PRIMARY KEY,
@@ -51,7 +48,6 @@ def create_database():
             )
         """)
 
-        #  mortgages table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS mortgages (
                 mortgage_id SERIAL PRIMARY KEY,
@@ -75,7 +71,6 @@ def create_database():
             )
         """)
 
-        # add missing columns if they do not exist
         alter_queries = [
             "ALTER TABLE mortgages ADD COLUMN IF NOT EXISTS principal_increment_value NUMERIC(15, 2)",
             "ALTER TABLE mortgages ADD COLUMN IF NOT EXISTS number_of_principal_increments INTEGER",
@@ -86,7 +81,6 @@ def create_database():
         for query in alter_queries:
             cursor.execute(query)
 
-        # interest_rate_changes table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS interest_rate_changes (
                 id SERIAL PRIMARY KEY,
@@ -96,7 +90,6 @@ def create_database():
             )
         """)
 
-        # transactions table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS transactions (
                 id SERIAL PRIMARY KEY,
@@ -113,7 +106,6 @@ def create_database():
             )
         """)
 
-        # amortization_schedules table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS amortization_schedules (
                 id SERIAL PRIMARY KEY,
@@ -125,7 +117,6 @@ def create_database():
             )
         """)
 
-        #  comments table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS comments (
                 id SERIAL PRIMARY KEY,
@@ -142,21 +133,6 @@ def create_database():
         print("Database and tables created successfully.")
     except Exception as e:
         print(f"Error setting up database tables: {e}")
-
-
-def check_database_connection():
-    try:
-        conn = psycopg2.connect(
-            dbname="mortgage_calculator",
-            user="postgres",
-            password="admin123",
-            host="localhost",
-            port="5432"
-        )
-        conn.close()
-        return True
-    except psycopg2.OperationalError:
-        return False
 
 
 if __name__ == "__main__":

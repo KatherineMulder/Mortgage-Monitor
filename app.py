@@ -10,11 +10,33 @@ import database
 from graphing import create_amortization_charts
 from datetime import datetime
 from decimal import Decimal
+import time
 
 user_manager = UserManager()
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "secret key"
 logging.basicConfig(level=logging.DEBUG)
+
+
+@app.route("/", methods=["GET", "POST"])
+def root():
+    return redirect(url_for("login"))
+
+
+def initialize_database():
+    if not database.check_database_connection():
+        print("Database not initialized. Creating database...")
+        database.create_database()
+        time.sleep(5)  # Wait for 5 seconds to ensure database creation
+        if not database.check_database_connection():
+            print("Database creation failed.")
+            return False
+        else:
+            print("Database created successfully.")
+            return True
+    else:
+        print("Database already initialized.")
+        return True
 
 
 def connect_to_database():
@@ -34,11 +56,6 @@ def connect_to_database():
     except Exception as e:
         logging.error(f"Failed to connect to the database: {str(e)}")
         raise
-
-
-@app.route("/", methods=["GET", "POST"])
-def root():
-    return redirect(url_for("login"))
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -193,42 +210,39 @@ def new_mortgage():
     if request.method == 'POST':
         action = request.form.get('action')
         mortgage_name = request.form.get("mortgage_name", "")
-        principal = float(request.form.get("principal"))
-        interest = float(request.form.get("interest"))
-        term = int(request.form.get("term"))
-        extra_costs = float(request.form.get("extra_costs")) if request.form.get("extra_costs") else 0.0
-        deposit = float(request.form.get("deposit")) if request.form.get("deposit") else 0.0
 
-        payment_override_enabled = 'payment_override_enabled' in request.form
-        monthly_payment_override = float(
-            request.form.get("monthly_payment_override")) if payment_override_enabled and request.form.get(
-            "monthly_payment_override") else None
-        fortnightly_payment_override = float(
-            request.form.get("fortnightly_payment_override")) if payment_override_enabled and request.form.get(
-            "fortnightly_payment_override") else None
-        comment = request.form.get("comment", "")
+        try:
+            principal = float(request.form.get("principal", "0"))
+            interest = float(request.form.get("interest", "0"))
+            term = int(request.form.get("term", "0"))
+            extra_costs = float(request.form.get("extra_costs", "0.0"))
+            deposit = float(request.form.get("deposit", "0.0"))
 
-        principal_increment_value = request.form.get("principal_increment_value")
-        principal_increment_value = float(
-            principal_increment_value) if principal_increment_value and principal_increment_value != 'None' else None
-        increment_results['principal_increment_value'] = principal_increment_value
+            payment_override_enabled = 'payment_override_enabled' in request.form
+            monthly_payment_override = float(request.form.get("monthly_payment_override", "0.0")) if payment_override_enabled else None
+            fortnightly_payment_override = float(request.form.get("fortnightly_payment_override", "0.0")) if payment_override_enabled else None
+            comment = request.form.get("comment", "")
 
-        number_of_principal_increments = request.form.get("number_of_principal_increments")
-        number_of_principal_increments = int(
-            number_of_principal_increments) if number_of_principal_increments and number_of_principal_increments != 'None' else None
-        increment_results['number_of_principal_increments'] = number_of_principal_increments
+            principal_increment_value = request.form.get("principal_increment_value")
+            principal_increment_value = float(principal_increment_value) if principal_increment_value and principal_increment_value != 'None' else None
+            increment_results['principal_increment_value'] = principal_increment_value
 
-        interest_rate_increment_value = request.form.get("interest_rate_increment_value")
-        interest_rate_increment_value = float(
-            interest_rate_increment_value) if interest_rate_increment_value and interest_rate_increment_value != 'None' else None
-        increment_results['interest_rate_increment_value'] = interest_rate_increment_value
+            number_of_principal_increments = request.form.get("number_of_principal_increments")
+            number_of_principal_increments = int(number_of_principal_increments) if number_of_principal_increments and number_of_principal_increments != 'None' else None
+            increment_results['number_of_principal_increments'] = number_of_principal_increments
 
-        number_of_interest_rate_increments = request.form.get("number_of_interest_rate_increments")
-        number_of_interest_rate_increments = int(
-            number_of_interest_rate_increments) if number_of_interest_rate_increments and number_of_interest_rate_increments != 'None' else None
-        increment_results['number_of_interest_rate_increments'] = number_of_interest_rate_increments
+            interest_rate_increment_value = request.form.get("interest_rate_increment_value")
+            interest_rate_increment_value = float(interest_rate_increment_value) if interest_rate_increment_value and interest_rate_increment_value != 'None' else None
+            increment_results['interest_rate_increment_value'] = interest_rate_increment_value
 
-        if action == 'calculate' or action == 'override':
+            number_of_interest_rate_increments = request.form.get("number_of_interest_rate_increments")
+            number_of_interest_rate_increments = int(number_of_interest_rate_increments) if number_of_interest_rate_increments and number_of_interest_rate_increments != 'None' else None
+            increment_results['number_of_interest_rate_increments'] = number_of_interest_rate_increments
+        except ValueError as e:
+            flash(f"An error occurred: {str(e)}", 'danger')
+            return render_template('new_mortgage.html', results=results)
+
+        if action == 'calculate' or action == 'recalculate':
             mortgage = Mortgage(
                 mortgage_name, interest, term, principal, deposit, extra_costs, comment,
                 payment_override_enabled, monthly_payment_override, fortnightly_payment_override
@@ -236,20 +250,18 @@ def new_mortgage():
             mortgage.calculate_initial_payment_breakdown()
             mortgage.calculate_mortgage_maturity()
 
-            # Calculate increments and add them to the results
             planning_scenarios = mortgage.generate_planning_scenarios(
                 principal_increment_value, number_of_principal_increments,
                 interest_rate_increment_value, number_of_interest_rate_increments
             )
 
             formatted_results = {
-                'initial_payment_breakdown': {key: f"{value:,.2f}" for key, value in
-                                              mortgage.initial_payment_breakdown.items()},
+                'initial_payment_breakdown': {key: f"{value:,.2f}" for key, value in mortgage.initial_payment_breakdown.items()},
                 'mortgage_maturity': mortgage.mortgage_maturity,
                 'comments': mortgage.get_comments(),
-                'increment_results': increment_results,  # Include increment results
-                'planning_scenarios': planning_scenarios,  # Include planning scenarios
-                'interest': interest  # Include interest
+                'increment_results': increment_results,
+                'planning_scenarios': planning_scenarios,
+                'interest': interest
             }
 
             results = formatted_results
@@ -271,20 +283,26 @@ def new_mortgage():
                 conn = connect_to_database()
                 cursor = conn.cursor()
                 try:
+                    logging.info("Fetching user_id for username: %s", username)
                     cursor.execute("SELECT user_id FROM users WHERE username = %s", (username,))
                     user_id = cursor.fetchone()[0]
 
+                    logging.info("Inserting new mortgage for user_id: %d", user_id)
                     cursor.execute("""
-                        INSERT INTO mortgages (user_id, mortgage_name, principal, interest, term, extra_costs, deposit, payment_override_enabled, monthly_payment_override, fortnightly_payment_override)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING mortgage_id
+                        INSERT INTO mortgages (user_id, mortgage_name, principal, interest, term, extra_costs, deposit, payment_override_enabled, monthly_payment_override, fortnightly_payment_override, principal_increment_value, number_of_principal_increments, interest_rate_increment_value, number_of_interest_rate_increments)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING mortgage_id
                     """, (
                         user_id, mortgage_name, principal, interest, term, extra_costs, deposit,
-                        payment_override_enabled, monthly_payment_override, fortnightly_payment_override
+                        payment_override_enabled, monthly_payment_override, fortnightly_payment_override,
+                        principal_increment_value, number_of_principal_increments,
+                        interest_rate_increment_value, number_of_interest_rate_increments
                     ))
 
                     mortgage_id = cursor.fetchone()[0]
+                    logging.info("Mortgage saved with id: %d", mortgage_id)
 
                     if comment:
+                        logging.info("Inserting comment for mortgage_id: %d", mortgage_id)
                         cursor.execute("""
                             INSERT INTO comments (mortgage_id, user_id, comment)
                             VALUES (%s, %s, %s)
@@ -293,6 +311,7 @@ def new_mortgage():
                     conn.commit()
                     flash('Mortgage saved successfully!', 'success')
                 except Exception as e:
+                    logging.error("Error occurred: %s", str(e))
                     conn.rollback()
                     flash(f"An error occurred: {str(e)}", 'danger')
                 finally:
@@ -301,9 +320,7 @@ def new_mortgage():
 
                 return redirect(url_for('index'))
 
-    return render_template(
-        'new_mortgage.html', results=results
-    )
+    return render_template('new_mortgage.html', results=results)
 
 
 @app.route("/update_mortgage/<int:mortgage_id>", methods=["GET", "POST"])
@@ -754,5 +771,16 @@ def export_projections(mortgage_id):
 
 
 if __name__ == "__main__":
-    database.create_database()
     app.run(debug=True)
+    if initialize_database():
+        try:
+
+            user_manager = UserManager()
+            print("UserManager initialized successfully.")
+
+            print("Starting app...")
+            app.run(debug=True)
+        except Exception as e:
+            print(f"Error: {e}")
+    else:
+        print("Failed to initialize database.")
