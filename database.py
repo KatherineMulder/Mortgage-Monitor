@@ -1,6 +1,7 @@
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
+
 def create_database():
     try:
         #  default 'postgres' database
@@ -14,7 +15,7 @@ def create_database():
         default_conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         default_cursor = default_conn.cursor()
 
-        # Check if mortgage_calculator database exists, create if not
+        #  if mortgage_calculator database exists, create if not
         default_cursor.execute("SELECT 1 FROM pg_catalog.pg_database WHERE datname = 'mortgage_calculator'")
         database_exists = default_cursor.fetchone()
 
@@ -42,7 +43,7 @@ def create_database():
         conn.autocommit = True
         cursor = conn.cursor()
 
-        # Create users table
+        #  users table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 user_id SERIAL PRIMARY KEY,
@@ -99,31 +100,27 @@ def create_database():
         # transactions table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS transactions (
-                id SERIAL PRIMARY KEY,
-                mortgage_id INTEGER REFERENCES mortgages(mortgage_id),
-                transaction_date DATE NOT NULL DEFAULT CURRENT_DATE,
-                current_principal NUMERIC(15, 2) NOT NULL,
-                interest_rate NUMERIC(5, 2) NOT NULL,
-                remaining_term_months INTEGER NOT NULL,
-                extra_payment NUMERIC(15, 2),
-                updated_monthly_payment NUMERIC(15, 2),
-                updated_fortnightly_payment NUMERIC(15, 2),
-                balloon_payment NUMERIC(15, 2),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            transaction_id SERIAL PRIMARY KEY,
+            mortgage_id INTEGER REFERENCES mortgages(mortgage_id),
+            user_id INTEGER REFERENCES users(user_id),
+            transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            transaction_type VARCHAR(50) NOT NULL,
+            amount NUMERIC(15, 2) NOT NULL,
+            description TEXT
             )
         """)
 
-        # amortization_schedules table
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS amortization_schedules (
-                id SERIAL PRIMARY KEY,
-                mortgage_id INTEGER REFERENCES mortgages(mortgage_id),
-                payment_date DATE NOT NULL,
-                principal_payment NUMERIC(15, 2) NOT NULL,
-                interest_payment NUMERIC(15, 2) NOT NULL,
-                remaining_balance NUMERIC(15, 2) NOT NULL
-            )
-        """)
+        # # amortization_schedules table
+        # cursor.execute("""
+        #     CREATE TABLE IF NOT EXISTS amortization_schedules (
+        #         id SERIAL PRIMARY KEY,
+        #         mortgage_id INTEGER REFERENCES mortgages(mortgage_id),
+        #         payment_date DATE NOT NULL,
+        #         principal_payment NUMERIC(15, 2) NOT NULL,
+        #         interest_payment NUMERIC(15, 2) NOT NULL,
+        #         remaining_balance NUMERIC(15, 2) NOT NULL
+        #     )
+        # """)
 
         #  comments table
         cursor.execute("""
@@ -143,6 +140,25 @@ def create_database():
     except Exception as e:
         print(f"Error setting up database tables: {e}")
 
+
+"""
+--  extra costs
+INSERT INTO transactions (mortgage_id, user_id, transaction_type, amount, description)
+VALUES (1, 1, 'Extra Costs', 5000.00, 'Added extra costs to principal');
+
+--  a balloon payment
+INSERT INTO transactions (mortgage_id, user_id, transaction_type, amount, description)
+VALUES (1, 1, 'Balloon Payment', 10000.00, 'Made a balloon payment');
+
+--  a monthly payment override
+INSERT INTO transactions (mortgage_id, user_id, transaction_type, amount, description)
+VALUES (1, 1, 'Monthly Payment Override', 200.00, 'Set monthly payment override');
+
+-- fortnightly payment override
+INSERT INTO transactions (mortgage_id, user_id, transaction_type, amount, description)
+VALUES (1, 1, 'Fortnightly Payment Override', 100.00, 'Set fortnightly payment override');
+
+"""
 
 def check_database_connection():
     try:
