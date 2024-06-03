@@ -50,24 +50,24 @@ def create_database():
 
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS mortgages (
-                mortgage_id SERIAL PRIMARY KEY,
-                user_id INTEGER REFERENCES users(user_id),
-                mortgage_name VARCHAR(100) NOT NULL,
-                principal NUMERIC(15, 2) NOT NULL,
-                interest NUMERIC(5, 2) NOT NULL,
-                term INTEGER NOT NULL,
-                extra_costs NUMERIC(15, 2),
-                deposit NUMERIC(15, 2),
-                payment_override_enabled BOOLEAN,
-                monthly_payment_override NUMERIC(15, 2),
-                fortnightly_payment_override NUMERIC(15, 2),
-                start_date DATE DEFAULT CURRENT_DATE,
-                comments TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                principal_increment_value NUMERIC(15, 2),
-                number_of_principal_increments INTEGER,
-                interest_rate_increment_value NUMERIC(5, 2),
-                number_of_interest_rate_increments INTEGER
+            mortgage_id SERIAL PRIMARY KEY,
+            user_id INTEGER REFERENCES users(user_id),
+            mortgage_name VARCHAR(100) NOT NULL,
+            principal NUMERIC(15, 2) NOT NULL,
+            interest NUMERIC(5, 2) NOT NULL,
+            term INTEGER NOT NULL,
+            extra_costs NUMERIC(15, 2),
+            deposit NUMERIC(15, 2),
+            payment_override_enabled BOOLEAN,
+            monthly_payment_override NUMERIC(15, 2),
+            fortnightly_payment_override NUMERIC(15, 2),
+            start_date DATE,
+            comments TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            principal_increment_value NUMERIC(15, 2),
+            number_of_principal_increments INTEGER,
+            interest_rate_increment_value NUMERIC(5, 2),
+            number_of_interest_rate_increments INTEGER
             )
         """)
 
@@ -91,21 +91,21 @@ def create_database():
         """)
 
         cursor.execute("""
-                   CREATE TABLE IF NOT EXISTS transactions (
-                    transaction_id SERIAL PRIMARY KEY,
-                    mortgage_id INTEGER REFERENCES mortgages(mortgage_id),
-                    transaction_date TIMESTAMP NOT NULL,
-                    transaction_type VARCHAR(50),
-                    current_principal NUMERIC,
-                    interest_rate NUMERIC,
-                    remaining_term_months INTEGER,
-                    extra_payment NUMERIC,
-                    updated_monthly_payment NUMERIC,
-                    updated_fortnightly_payment NUMERIC,
-                    amount NUMERIC,
-                    description TEXT
-                   )
-               """)
+           CREATE TABLE IF NOT EXISTS transactions (
+                transaction_id SERIAL PRIMARY KEY,
+                mortgage_id INTEGER REFERENCES mortgages(mortgage_id),
+                transaction_date TIMESTAMP NOT NULL,
+                transaction_type VARCHAR(50),
+                current_principal NUMERIC,
+                interest_rate NUMERIC,
+                remaining_term_months INTEGER,
+                extra_payment NUMERIC,
+                updated_monthly_payment NUMERIC,
+                updated_fortnightly_payment NUMERIC,
+                amount NUMERIC,
+                description TEXT
+           )
+        """)
 
         # cursor.execute("""
         #     CREATE TABLE IF NOT EXISTS amortization_schedules (

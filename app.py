@@ -17,6 +17,7 @@ app.config["SECRET_KEY"] = "secret key"
 logging.basicConfig(level=logging.DEBUG)
 
 
+
 @app.route("/", methods=["GET", "POST"])
 def root():
     return redirect(url_for("login"))
@@ -176,9 +177,9 @@ def index():
                 'graph_html_fortnightly': graph_html_fortnightly,
                 'latest_interest_rate': latest_interest_rate,
                 'latest_effective_date': latest_effective_date,
-                'start_date': start_date.strftime("%Y-%m-%d") if start_date else "N/A",
+                'start_date': start_date.strftime("%d-%m-%Y") if start_date else "N/A",
                 'comments': comments,
-                'created_at': created_at.strftime("%Y-%m-%d %H:%M:%S") if created_at else "N/A",
+                'created_at': created_at.strftime("%d-%m-%Y %H:%M:%S") if created_at else "N/A",
             })
 
     except Exception as e:
@@ -210,6 +211,9 @@ def new_mortgage():
     if request.method == 'POST':
         action = request.form.get('action')
         mortgage_name = request.form.get("mortgage_name", "")
+        start_date_str = request.form.get("start_date")
+
+        logging.info(f"Raw start_date received: {start_date_str}")
 
         try:
             principal = float(request.form.get("principal", "0"))
@@ -221,8 +225,9 @@ def new_mortgage():
             payment_override_enabled = 'payment_override_enabled' in request.form
             monthly_payment_override = float(request.form.get("monthly_payment_override", "0.0")) if payment_override_enabled else None
             fortnightly_payment_override = float(request.form.get("fortnightly_payment_override", "0.0")) if payment_override_enabled else None
+            start_date_str = request.form.get("start_date")
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date() if start_date_str else None
             comments = request.form.get("comments", "")
-            start_date = request.form.get("start_date")
             created_at = datetime.now()
 
             principal_increment_value = request.form.get("principal_increment_value")
@@ -241,6 +246,13 @@ def new_mortgage():
             number_of_interest_rate_increments = int(number_of_interest_rate_increments) if number_of_interest_rate_increments else 0
             increment_results['number_of_interest_rate_increments'] = number_of_interest_rate_increments
 
+            logging.info(f"Received form data: mortgage_name={mortgage_name}, principal={principal}, interest={interest}, term={term}, "
+                         f"extra_costs={extra_costs}, deposit={deposit}, payment_override_enabled={payment_override_enabled}, "
+                         f"monthly_payment_override={monthly_payment_override}, fortnightly_payment_override={fortnightly_payment_override}, "
+                         f"start_date_str={start_date_str}, start_date={start_date}, comments={comments}, created_at={created_at}, "
+                         f"principal_increment_value={principal_increment_value}, number_of_principal_increments={number_of_principal_increments}, "
+                         f"interest_rate_increment_value={interest_rate_increment_value}, number_of_interest_rate_increments={number_of_interest_rate_increments}")
+
         except ValueError as e:
             flash(f"An error occurred: {str(e)}", 'danger')
             return render_template('new_mortgage.html', results=results)
@@ -248,7 +260,7 @@ def new_mortgage():
         if action == 'calculate' or action == 'recalculate':
             mortgage = Mortgage(
                 mortgage_name, interest, term, principal, deposit, extra_costs, comments,
-                payment_override_enabled, monthly_payment_override, fortnightly_payment_override
+                payment_override_enabled, monthly_payment_override, fortnightly_payment_override, start_date
             )
             mortgage.calculate_initial_payment_breakdown()
             mortgage.calculate_mortgage_maturity()
@@ -264,7 +276,8 @@ def new_mortgage():
                 'comments': mortgage.get_comments(),
                 'increment_results': increment_results,
                 'planning_scenarios': planning_scenarios,
-                'interest': interest
+                'interest': interest,
+                'start_date': start_date
             }
 
             results = formatted_results
@@ -277,7 +290,8 @@ def new_mortgage():
                 principal_increment_value=principal_increment_value,
                 number_of_principal_increments=number_of_principal_increments,
                 interest_rate_increment_value=interest_rate_increment_value,
-                number_of_interest_rate_increments=number_of_interest_rate_increments
+                number_of_interest_rate_increments=number_of_interest_rate_increments,
+                start_date=start_date_str
             )
 
         elif action == 'save_mortgage':
@@ -291,6 +305,7 @@ def new_mortgage():
                     user_id = cursor.fetchone()[0]
 
                     logging.info("Inserting new mortgage for user_id: %d", user_id)
+                    logging.info(f"Inserting mortgage with start_date: {start_date}")
                     cursor.execute("""
                         INSERT INTO mortgages (user_id, mortgage_name, principal, interest, term, extra_costs, deposit, 
                         payment_override_enabled, monthly_payment_override, fortnightly_payment_override, start_date, comments, 
@@ -320,7 +335,6 @@ def new_mortgage():
                 return redirect(url_for('index'))
 
     return render_template('new_mortgage.html', results=results)
-
 
 @app.route("/update_mortgage/<int:mortgage_id>", methods=["GET", "POST"])
 def update_mortgage(mortgage_id):
@@ -719,75 +733,6 @@ def export_projections(mortgage_id):
     except Exception as e:
         logging.error(f"Error exporting projections: {str(e)}")
         return "Internal Server Error", 500
-
-
-@app.route("/add_comment/<int:mortgage_id>", methods=["POST"])
-def add_comment(mortgage_id):
-    if 'username' not in session:
-        return redirect(url_for('login'))
-
-    user_id = session['user_id']
-    comment_text = request.form.get("comment")
-
-    if comment_text:
-        conn = connect_to_database()
-        cursor = conn.cursor()
-
-        cursor.execute("""
-            INSERT INTO comments (mortgage_id, user_id, comment)
-            VALUES (%s, %s, %s)
-        """, (mortgage_id, user_id, comment_text))
-
-        conn.commit()
-        cursor.close()
-        conn.close()
-        flash("Comment added successfully!", "success")
-    else:
-        flash("Comment cannot be empty.", "danger")
-
-    return redirect(url_for('index'))
-
-
-@app.route("/delete_comment/<int:comment_id>", methods=["POST"])
-def delete_comment(comment_id):
-    if 'username' not in session:
-        return redirect(url_for('login'))
-
-    conn = connect_to_database()
-    cursor = conn.cursor()
-
-    cursor.execute("DELETE FROM comments WHERE id = %s", (comment_id,))
-
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-    flash("Comment deleted successfully!", "success")
-    return redirect(url_for('index'))
-
-
-@app.route("/update_comment/<int:comment_id>", methods=["POST"])
-def update_comment(comment_id):
-    if 'username' not in session:
-        return redirect(url_for('login'))
-
-    new_comment_text = request.form.get("comment")
-
-    if new_comment_text:
-        conn = connect_to_database()
-        cursor = conn.cursor()
-
-        cursor.execute("UPDATE comments SET comment = %s WHERE id = %s", (new_comment_text, comment_id))
-
-        conn.commit()
-        cursor.close()
-        conn.close()
-
-        flash("Comment updated successfully!", "success")
-    else:
-        flash("Comment cannot be empty.", "danger")
-
-    return redirect(url_for('index'))
 
 
 if __name__ == "__main__":

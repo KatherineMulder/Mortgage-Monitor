@@ -18,19 +18,18 @@
         </div>
     {% endif %}
     <form action="/login" method="POST">
-        <div class="txt_field">
+        <div class="txt_field fs-3">
             <i class="fas fa-user"></i>
-            <input type="text" id="username" name="username" required>
+            <input class="fs-3" type="text" id="username" name="username" required>
             <label for="username">Username</label>
         </div>
-        <div class="txt_field">
+        <div class="txt_field fs-3">
             <i class="fas fa-lock"></i>
-            <input type="password" id="password" name="password" required>
+            <input class="fs-3" type="password" id="password" name="password" required>
             <label for="password">Password</label>
         </div>
-        <div class="pass">Forgot Password?</div>
         <input type="submit" value="Login">
-        <div class="signup_link">
+        <div class="signup_link fs-3">
             Not a Member? <a href="{{ url_for('signup') }}">Sign up</a>
         </div>
     </form>

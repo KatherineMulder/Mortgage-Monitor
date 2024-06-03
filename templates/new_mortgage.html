@@ -56,10 +56,6 @@
                             <input type="number" class="form-control fs-4" id="extra_costs" name="extra_costs" value="{{ extra_costs }}">
                         </div>
                         <div class="mb-3">
-                            <label for="start_date" class="form-label fs-4">Start Date:</label>
-                            <input type="date" class="form-control fs-4" id="start_date" name="start_date" value="{{ start_date }}" required>
-                        </div>
-                        <div class="mb-3">
                             <label for="comments" class="form-label fs-4">Comments:</label>
                             <textarea class="form-control fs-4" id="comments" name="comments">{{ comments }}</textarea>
                         </div>
@@ -141,7 +137,10 @@
                         <input class="fs-4" type="hidden" name="number_of_principal_increments" value="{{ number_of_principal_increments }}">
                         <input class="fs-4" type="hidden" name="interest_rate_increment_value" value="{{ interest_rate_increment_value }}">
                         <input class="fs-4" type="hidden" name="number_of_interest_rate_increments" value="{{ number_of_interest_rate_increments }}">
-
+                        <div class="mb-3">
+                            <label for="start_date" class="form-label fs-4">Start Date:</label>
+                            <input type="date" class="form-control fs-4" id="start_date" name="start_date" value="{{ start_date }}" required>
+                        </div>
                         <div class="form-check mb-3">
                             <input type="checkbox" class="form-check-input fs-4" id="payment_override_enabled" name="payment_override_enabled" onchange="toggleOverrideFields(this)" {% if payment_override_enabled %} checked {% endif %}>
                             <label class="form-check-label fs-4" for="payment_override_enabled">Enable Payment Override</label>
@@ -265,6 +264,13 @@
             form.submit();
         }
 
+        document.addEventListener('DOMContentLoaded', function () {
+            var startDateInput = document.querySelector('input[name="start_date"]');
+            if (startDateInput) {
+                startDateInput.value = startDateInput.getAttribute('value');
+            }
+        });
+
         $(document).ready(function() {
             $("#updatePasswordBtn").click(function() {
                 $("#updatePasswordModal").modal('show');
@@ -307,6 +313,10 @@
                 }
             });
         });
+
+
+
+
     </script>
 </body>
 </html>

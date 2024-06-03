@@ -52,29 +52,28 @@ def create_database():
             )
         """)
 
-        #  mortgages table
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS mortgages (
-                mortgage_id SERIAL PRIMARY KEY,
-                user_id INTEGER REFERENCES users(user_id),
-                mortgage_name VARCHAR(100) NOT NULL,
-                principal NUMERIC(15, 2) NOT NULL,
-                interest NUMERIC(5, 2) NOT NULL,
-                term INTEGER NOT NULL,
-                extra_costs NUMERIC(15, 2),
-                deposit NUMERIC(15, 2),
-                payment_override_enabled BOOLEAN,
-                monthly_payment_override NUMERIC(15, 2),
-                fortnightly_payment_override NUMERIC(15, 2),
-                start_date DATE DEFAULT CURRENT_DATE,
-                comments TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                principal_increment_value NUMERIC(15, 2),
-                number_of_principal_increments INTEGER,
-                interest_rate_increment_value NUMERIC(5, 2),
-                number_of_interest_rate_increments INTEGER
-            )
-        """)
+           CREATE TABLE IF NOT EXISTS mortgages (
+            mortgage_id SERIAL PRIMARY KEY,
+            user_id INTEGER REFERENCES users(user_id),
+            mortgage_name VARCHAR(100) NOT NULL,
+            principal NUMERIC(15, 2) NOT NULL,
+            interest NUMERIC(5, 2) NOT NULL,
+            term INTEGER NOT NULL,
+            extra_costs NUMERIC(15, 2),
+            deposit NUMERIC(15, 2),
+            payment_override_enabled BOOLEAN,
+            monthly_payment_override NUMERIC(15, 2),
+            fortnightly_payment_override NUMERIC(15, 2),
+            start_date DATE,
+            comments TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            principal_increment_value NUMERIC(15, 2),
+            number_of_principal_increments INTEGER,
+            interest_rate_increment_value NUMERIC(5, 2),
+            number_of_interest_rate_increments INTEGER
+                   )
+               """)
 
         # add missing columns if they do not exist
         alter_queries = [

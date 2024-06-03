@@ -2,11 +2,13 @@ from datetime import datetime
 from typing import List, Optional, Dict
 
 
+
 class Mortgage:
     def __init__(self, mortgage_name: str, initial_interest: float, initial_term: int, initial_principal: float,
-                 deposit: float, extra_costs: float, comments: Optional[str] = None, payment_override_enabled: bool = False,
+                 deposit: float, extra_costs: float, comments: Optional[str] = None,
+                 payment_override_enabled: bool = False,
                  monthly_payment_override: Optional[float] = None, fortnightly_payment_override: Optional[float] = None,
-                 start_date: Optional[datetime] = None , created_at: Optional[datetime] = None):
+                 start_date: Optional[datetime] = None, created_at: Optional[datetime] = None):
         self._mortgage_id: Optional[int] = None
         self._mortgage_name: str = mortgage_name
         self._initial_interest: float = initial_interest / 100
@@ -33,7 +35,7 @@ class Mortgage:
     @start_date.setter
     def start_date(self, value: datetime) -> None:
         if value is None or not isinstance(value, datetime):
-            raise ValueError("start date must be a datetime ")
+            raise ValueError("Start date must be a datetime.")
         self._start_date = value
 
     @property
@@ -124,16 +126,6 @@ class Mortgage:
             raise ValueError("Extra costs cannot be negative")
         self._extra_costs = value
 
-    @property
-    def start_date(self) -> datetime:
-        return self._start_date
-
-    @start_date.setter
-    def start_date(self, value: datetime) -> None:
-        if value is None or not isinstance(value, datetime):
-            raise ValueError("Start date must be a datetime object")
-        self._start_date = value
-
     def gather_inputs(self, principal, interest, term, extra_costs, deposit, payment_override_enabled,
                       monthly_payment_override, fortnightly_payment_override):
         self._initial_principal = principal
@@ -171,8 +163,10 @@ class Mortgage:
             for j in range(interest_increments + 1):
                 interest_rate = (self._initial_interest * 100) + (j * interest_increment)
 
-                monthly_payment = self.calculate_projected_payment(principal, interest_rate, self._initial_term, "monthly")
-                fortnightly_payment = self.calculate_projected_payment(principal, interest_rate, self._initial_term, "fortnightly")
+                monthly_payment = self.calculate_projected_payment(principal, interest_rate, self._initial_term,
+                                                                   "monthly")
+                fortnightly_payment = self.calculate_projected_payment(principal, interest_rate, self._initial_term,
+                                                                       "fortnightly")
 
                 monthly_payments.append(monthly_payment)
                 fortnightly_payments.append(fortnightly_payment)
@@ -626,7 +620,8 @@ if __name__ == "__main__":
 
         print("\nProjected Payments Per Month")
         total_amount_borrowed = 810000 - 50000 + 10000
-        header = ["Interest Rate"] + [f"${principal:,.2f}" for principal in range(total_amount_borrowed, total_amount_borrowed + (3000 * 8), 3000)]
+        header = ["Interest Rate"] + [f"${principal:,.2f}" for principal in
+                                      range(total_amount_borrowed, total_amount_borrowed + (3000 * 8), 3000)]
         print("\t".join(header))
 
         for i in range(16):
