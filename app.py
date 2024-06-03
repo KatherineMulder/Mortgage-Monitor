@@ -27,7 +27,7 @@ def initialize_database():
     if not database.check_database_connection():
         print("database not initialized. Creating database...")
         database.create_database()
-        time.sleep(5)  # Wait for 5 seconds to ensure database creation
+        time.sleep(5)
         if not database.check_database_connection():
             print("database creation failed.")
             return False

@@ -2,7 +2,6 @@ from datetime import datetime
 from typing import List, Optional, Dict
 
 
-
 class Mortgage:
     def __init__(self, mortgage_name: str, initial_interest: float, initial_term: int, initial_principal: float,
                  deposit: float, extra_costs: float, comments: Optional[str] = None,
@@ -27,6 +26,7 @@ class Mortgage:
         self.amortization_schedule: Dict[str, List[Dict[str, float]]] = {}
         self.interest_rate_changes: List[Dict] = []
         self.historical_transactions: List[Dict] = []
+        self.transaction_logs = []
 
     @property
     def start_date(self) -> datetime:
@@ -402,35 +402,6 @@ class Mortgage:
         }
         return self.amortization_schedule
 
-    def update_mortgage(self, new_interest_rate: float, current_principal: float, remaining_term_months: int,
-                        extra_payment: Optional[float] = None, updated_monthly_payment: Optional[float] = None,
-                        updated_fortnightly_payment: Optional[float] = None):
-        self._initial_principal = current_principal
-        self._initial_interest = new_interest_rate / 100
-        self._initial_term = remaining_term_months // 12
-        self.payment_override_enabled = True if updated_monthly_payment or updated_fortnightly_payment else False
-        self.monthly_payment_override = updated_monthly_payment
-        self.fortnightly_payment_override = updated_fortnightly_payment
-
-        transaction = {
-            "transaction_date": datetime.now(),
-            "transaction_type": "Update",
-            "current_principal": current_principal,
-            "interest_rate": new_interest_rate,
-            "remaining_term_months": remaining_term_months,
-            "extra_payment": extra_payment,
-            "updated_monthly_payment": updated_monthly_payment,
-            "updated_fortnightly_payment": updated_fortnightly_payment,
-            "description": "Updated mortgage information"
-        }
-
-        self.historical_transactions.append(transaction)
-
-        # recalculate based on the updated information
-        self.calculate_initial_payment_breakdown()
-        self.calculate_mortgage_maturity()
-        self.amortization_table()
-
     def make_balloon_payment(self, lump_sum: float):
         if lump_sum <= 0:
             raise ValueError("Lump sum payment must be greater than zero")
@@ -538,24 +509,6 @@ if __name__ == "__main__":
         for row in amortization_schedule["monthly"][:5]:  # show first 5 data
             print(row)
 
-        M.update_mortgage(new_interest_rate=4.5, current_principal=750000, remaining_term_months=15 * 12,
-                          extra_payment=5000, updated_monthly_payment=6500)
-        print("\nAfter Updating Mortgage:")
-        print("Updated Payment Breakdown:")
-        for key, value in M.initial_payment_breakdown.items():
-            print(f"{key}: {value}")
-        print()
-
-        print("Updated Mortgage Maturity Details:")
-        for key, value in M.mortgage_maturity["monthly"].items():
-            print(f"{key}: {value}")
-        print()
-
-        print("Updated Amortization Table (Monthly - first 5 periods):")
-        amortization_schedule = M.amortization_table()
-        for row in amortization_schedule["monthly"][:5]:
-            print(row)
-
         # balloon
         M.make_balloon_payment(100000)
         print("\nAfter Balloon Payment of 100000:")
@@ -566,49 +519,6 @@ if __name__ == "__main__":
         print("Amortization Table (Monthly - first 5 periods):")
         for row in amortization_schedule["monthly"][:5]:
             print(row)
-
-        # interest rate change
-        new_interest_rate = 3.5
-        effective_date = datetime(2024, 5, 26)
-        M.add_interest_rate_change(new_interest_rate, effective_date)
-        print("\nAfter Interest Rate Change to 3.5% on May 26, 2024:")
-        amortization_schedule = M.amortization_table()
-        print("Amortization Table (Monthly - first 10 periods after interest rate change):")
-        for row in amortization_schedule["monthly"][48:58]:  # show 10 periods around the interest rate change
-            print(row)
-
-        M.interest_rate_changes = [
-            {"new_interest_rate": 3.5, "effective_date": datetime(2024, 5, 26)},
-            {"new_interest_rate": 4.0, "effective_date": datetime(2026, 5, 26)},
-            {"new_interest_rate": 4.5, "effective_date": datetime(2028, 5, 26)}
-        ]
-        print("\nAfter Multiple Interest Rate Changes:")
-        amortization_schedule = M.amortization_table()
-        print("Amortization Table (Monthly - first 10 periods after each interest rate change):")
-        for change in M.interest_rate_changes:
-            effective_period = (change["effective_date"].year - M._start_date.year) * 12 + change[
-                "effective_date"].month - M._start_date.month
-            print(
-                f"Interest Rate Change to {change['new_interest_rate']}% effective on {change['effective_date']}:")
-            for row in amortization_schedule["monthly"][effective_period:effective_period + 10]:
-                print(row)
-
-        new_interest_rate = 2.5
-        effective_date = datetime(2024, 5, 26)
-        M.add_interest_rate_change(new_interest_rate, effective_date)
-        print("\nAfter Immediate Interest Rate Change to 2.5% on May 26, 2024:")
-        amortization_schedule = M.amortization_table()
-        print("Amortization Table (Monthly - first 5 periods):")
-        for row in amortization_schedule["monthly"][:5]:  # show first 5 data
-            print(row)
-
-        # CRUD comment
-        M.add_comments("Need extra money for insurance.")
-        M.add_comments("Borrow more money for buying a car.")
-        print("\nComments:")
-        comments = M.get_comments()
-        for comment in comments:
-            print(comments)
 
         # scenarios for the increment
         scenarios = M.generate_planning_scenarios(
@@ -638,6 +548,7 @@ if __name__ == "__main__":
             for scenario in scenarios:
                 row.append(f"${scenario['fortnightly_payments'][i]:,.2f}")
             print("\t".join(row))
+
 
     except Exception as e:
         print(f"error: {e}")

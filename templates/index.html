@@ -68,7 +68,7 @@
 
             <!-- mortgage details -->
             {% for mortgage in mortgage_details %}
-                <div class="card mb-3 mortgage-details" id="mortgage-{{ mortgage.mortgage_id }}" style="display:none;">
+                <div class="card mb-3 mortgage-details" id="mortgage-{{ mortgage.mortgage_id }}">
                     <div class="card-body">
                         <h4 class="text-center">Mortgage Name:<br><span class="card-title fs-2 text-center pt-4 fw-light">{{ mortgage.mortgage_name }}</span></h4>
                         <div class="row">
@@ -173,7 +173,7 @@
                                         <thead class="table-dark">
                                             <tr>
                                                 <th>Fortnightly Breakdown</th>
-                                                <th>Value</th>
+                                                <th>Value</h>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -320,8 +320,6 @@
                             <a href="{{ url_for('view_projections', mortgage_id=mortgage.mortgage_id) }}" class="btn btn-primary fs-4">View Increment Projections</a>
                             <a href="{{ url_for('amortization_schedule', mortgage_id=mortgage.mortgage_id) }}" class="btn btn-primary">View Amortization Schedule</a>
                         </div>
-
-
                     </div>
                 </div>
                 <div class="container">
@@ -358,60 +356,78 @@
             </div>
         </div>
     </div>
-</div>
-        <script>
-            $(document).ready(function() {
-                $("#updatePasswordBtn").click(function() {
-                    $("#updatePasswordModal").modal('show');
-                });
 
-                $("#updatePasswordForm").submit(function(event) {
-                    event.preventDefault();
+    <!-- remove account modal -->
+    <div class="modal fade" id="removeAccountModal" tabindex="-1" aria-labelledby="removeAccountModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="removeAccountModalLabel">Remove Account</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="removeAccountForm">
+                        <p>Are you sure you want to remove your account? This action cannot be undone.</p>
+                        <button type="submit" class="btn btn-danger">Remove Account</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            $("#updatePasswordBtn").click(function() {
+                $("#updatePasswordModal").modal('show');
+            });
+
+            $("#updatePasswordForm").submit(function(event) {
+                event.preventDefault();
+                $.ajax({
+                    type: "POST",
+                    url: "{{ url_for('update_password') }}",
+                    data: $(this).serialize(),
+                    success: function(response) {
+                        alert(response.message);
+                        $("#updatePasswordModal").modal('hide');
+                    },
+                    error: function(xhr, status, error) {
+                        alert("Error: " + xhr.responseText);
+                    }
+                });
+            });
+
+            $("#removeAccountBtn").click(function() {
+                $("#removeAccountModal").modal('show');
+            });
+
+            $("#removeAccountForm").submit(function(event) {
+                event.preventDefault();
+                if (confirm("Are you sure you want to remove your account?")) {
                     $.ajax({
                         type: "POST",
-                        url: "{{ url_for('update_password') }}",
-                        data: $(this).serialize(),
+                        url: "{{ url_for('remove_user') }}",
                         success: function(response) {
                             alert(response.message);
-                            $("#updatePasswordModal").modal('hide');
+                            window.location.href = "{{ url_for('login') }}";
                         },
                         error: function(xhr, status, error) {
                             alert("Error: " + xhr.responseText);
                         }
                     });
-                });
-
-                $("#removeAccountBtn").click(function() {
-                    $("#removeAccountModal").modal('show');
-                });
-
-                $("#removeAccountForm").submit(function(event) {
-                    event.preventDefault();
-                    if (confirm("Are you sure you want to remove your account?")) {
-                        $.ajax({
-                            type: "POST",
-                            url: "{{ url_for('remove_user') }}",
-                            success: function(response) {
-                                alert(response.message);
-                                window.location.href = "{{ url_for('login') }}";
-                            },
-                            error: function(xhr, status, error) {
-                                alert("Error: " + xhr.responseText);
-                            }
-                        });
-                    }
-                });
-            });
-
-            function displaySelectedMortgage() {
-                var selectedMortgage = $("#mortgageSelect").val();
-                $(".mortgage-details").hide();
-                $(".mortgage-charts").hide();
-                if (selectedMortgage) {
-                    $("#mortgage-" + selectedMortgage).show();
-                    $("#charts-" + selectedMortgage).show();
                 }
+            });
+        });
+
+        function displaySelectedMortgage() {
+            var selectedMortgage = $("#mortgageSelect").val();
+            $(".mortgage-details").hide();
+            $(".mortgage-charts").hide();
+            if (selectedMortgage) {
+                $("#mortgage-" + selectedMortgage).show();
+                $("#charts-" + selectedMortgage).show();
             }
-        </script>
-    </body>
+        }
+    </script>
+</body>
 </html>

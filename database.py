@@ -86,15 +86,15 @@ def create_database():
         for query in alter_queries:
             cursor.execute(query)
 
-        # # interest_rate_changes table
-        # cursor.execute("""
-        #     CREATE TABLE IF NOT EXISTS interest_rate_changes (
-        #         id SERIAL PRIMARY KEY,
-        #         mortgage_id INTEGER REFERENCES mortgages(mortgage_id),
-        #         new_interest_rate NUMERIC(5, 2) NOT NULL,
-        #         effective_date DATE NOT NULL
-        #     )
-        # """)
+        # interest_rate_changes table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS interest_rate_changes (
+                id SERIAL PRIMARY KEY,
+                mortgage_id INTEGER REFERENCES mortgages(mortgage_id),
+                new_interest_rate NUMERIC(5, 2) NOT NULL,
+                effective_date DATE NOT NULL
+            )
+        """)
 
         # transactions table
         cursor.execute("""
@@ -114,28 +114,28 @@ def create_database():
             )
         """)
 
-        # # amortization_schedules table
-        # cursor.execute("""
-        #     CREATE TABLE IF NOT EXISTS amortization_schedules (
-        #         id SERIAL PRIMARY KEY,
-        #         mortgage_id INTEGER REFERENCES mortgages(mortgage_id),
-        #         payment_date DATE NOT NULL,
-        #         principal_payment NUMERIC(15, 2) NOT NULL,
-        #         interest_payment NUMERIC(15, 2) NOT NULL,
-        #         remaining_balance NUMERIC(15, 2) NOT NULL
-        #     )
-        # """)
+        # amortization_schedules table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS amortization_schedules (
+                id SERIAL PRIMARY KEY,
+                mortgage_id INTEGER REFERENCES mortgages(mortgage_id),
+                payment_date DATE NOT NULL,
+                principal_payment NUMERIC(15, 2) NOT NULL,
+                interest_payment NUMERIC(15, 2) NOT NULL,
+                remaining_balance NUMERIC(15, 2) NOT NULL
+            )
+        """)
 
-        # #  comments table
-        # cursor.execute("""
-        #     CREATE TABLE IF NOT EXISTS comments (
-        #         id SERIAL PRIMARY KEY,
-        #         mortgage_id INTEGER REFERENCES mortgages(mortgage_id),
-        #         user_id INTEGER REFERENCES users(user_id),
-        #         comment TEXT NOT NULL,
-        #         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        #     )
-        # """)
+        #  comments table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS comments (
+                id SERIAL PRIMARY KEY,
+                mortgage_id INTEGER REFERENCES mortgages(mortgage_id),
+                user_id INTEGER REFERENCES users(user_id),
+                comment TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
 
         conn.commit()
         cursor.close()
