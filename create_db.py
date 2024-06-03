@@ -91,17 +91,17 @@ def create_database():
         """)
 
         cursor.execute("""
-           CREATE TABLE IF NOT EXISTS transactions (
+            CREATE TABLE IF NOT EXISTS transactions (
                 transaction_id SERIAL PRIMARY KEY,
                 mortgage_id INTEGER REFERENCES mortgages(mortgage_id),
                 transaction_date TIMESTAMP NOT NULL,
                 transaction_type VARCHAR(50),
                 current_principal NUMERIC,
-                interest_rate NUMERIC,
+                new_interest_rate NUMERIC,
                 remaining_term_months INTEGER,
                 extra_payment NUMERIC,
-                updated_monthly_payment NUMERIC,
-                updated_fortnightly_payment NUMERIC,
+                new_monthly_payment NUMERIC,
+                new_fortnightly_payment NUMERIC,
                 amount NUMERIC,
                 description TEXT
            )

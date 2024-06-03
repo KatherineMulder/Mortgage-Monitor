@@ -23,35 +23,55 @@
             </div>
         </div>
     </nav>
-       <div class="container">
-        <h1>Update Mortgage</h1>
-        <form method="post" action="{{ url_for('update_mortgage_route') }}">
-            <input type="hidden" name="mortgage_id" value="{{ mortgage.mortgage_id }}">
-            <div class="mb-3">
-                <label for="new_interest_rate" class="form-label">New Interest Rate</label>
-                <input type="text" class="form-control" id="new_interest_rate" name="new_interest_rate" value="{{ mortgage.initial_interest * 100 }}">
-            </div>
-            <div class="mb-3">
-                <label for="monthly_payment_override" class="form-label">Monthly Payment Override</label>
-                <input type="text" class="form-control" id="monthly_payment_override" name="monthly_payment_override" value="{{ mortgage.monthly_payment_override }}">
-            </div>
-            <div class="mb-3">
-                <label for="extra_costs" class="form-label">Extra Costs</label>
-                <input type="text" class="form-control" id="extra_costs" name="extra_costs">
-            </div>
-            <div class="mb-3">
-                <label for="balloon_payment" class="form-label">Balloon Payment</label>
-                <input type="text" class="form-control" id="balloon_payment" name="balloon_payment">
-            </div>
-            <div class="mb-3">
-                <label for="comments" class="form-label">Comments</label>
-                <textarea class="form-control" id="comments" name="comments" rows="3">{{ mortgage.comments }}</textarea>
-            </div>
-            <button type="submit" class="btn btn-primary">Update Mortgage</button>
-        </form>
-    </div>
+     <div class="container">
+    <h1 class="mt-5">Transaction</h1>
+    <form method="POST">
+        <div class="form-group">
+            <label for="mortgage_id">Mortgage ID</label>
+            <input type="number" class="form-control" id="mortgage_id" name="mortgage_id" required>
+        </div>
+        <div class="form-group">
+            <label for="transaction_type">Transaction Type</label>
+            <input type="text" class="form-control" id="transaction_type" name="transaction_type" required>
+        </div>
+        <div class="form-group">
+            <label for="amount">Amount</label>
+            <input type="number" step="0.01" class="form-control" id="amount" name="amount" required>
+        </div>
+        <div class="form-group">
+            <label for="current_principal">Current Principal</label>
+            <input type="number" step="0.01" class="form-control" id="current_principal" name="current_principal" required>
+        </div>
+        <div class="form-group">
+            <label for="new_interest_rate">New Interest Rate</label>
+            <input type="number" step="0.01" class="form-control" id="new_interest_rate" name="new_interest_rate">
+        </div>
+        <div class="form-group">
+            <label for="new_monthly_payment">New Monthly Payment</label>
+            <input type="number" step="0.01" class="form-control" id="new_monthly_payment" name="new_monthly_payment">
+        </div>
+        <div class="form-group">
+            <label for="new_fortnightly_payment">New Fortnightly Payment</label>
+            <input type="number" step="0.01" class="form-control" id="new_fortnightly_payment" name="new_fortnightly_payment">
+        </div>
+        <div class="form-group">
+            <label for="remaining_term_months">Remaining Term (Months)</label>
+            <input type="number" class="form-control" id="remaining_term_months" name="remaining_term_months">
+        </div>
+        <div class="form-group">
+            <label for="extra_payment">Extra Payment</label>
+            <input type="number" step="0.01" class="form-control" id="extra_payment" name="extra_payment">
+        </div>
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea class="form-control" id="description" name="description"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+
+
     <script>
-        $(document).ready(function() {
+          $(document).ready(function() {
             $("#updatePasswordBtn").click(function() {
                 $("#updatePasswordModal").modal('show');
             });
@@ -93,7 +113,6 @@
                 }
             });
         });
-
         function toggleOverrideFields(checkbox) {
             var monthlyOverrideField = document.getElementById("monthly_payment_override");
             var fortnightlyOverrideField = document.getElementById("fortnightly_payment_override");
@@ -107,12 +126,6 @@
                 fortnightlyOverrideField.value = "";
             }
         }
-
-
-        window.onload = function() {
-            var checkbox = document.getElementById("payment_override_enabled");
-            toggleOverrideFields(checkbox);
-        };
     </script>
 </body>
 </html>

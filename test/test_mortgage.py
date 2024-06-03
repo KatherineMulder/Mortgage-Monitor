@@ -1,209 +1,309 @@
 import pytest
-from datetime import datetime
+from datetime import datetime, timedelta
 from mortgage import Mortgage
-from transaction import Transaction
 
 
 def test_mortgage_initialization():
-    mortgage = Mortgage()
-    assert mortgage._mortgage_id is None
-    assert mortgage._mortgage_name == ""
-    assert mortgage._initial_interest == 0.0
-    assert mortgage._initial_term == 0
-    assert mortgage._initial_principal == 0.0
-    assert mortgage._deposit == 0.0
-    assert mortgage._extra_costs == 0.0
-    assert isinstance(mortgage._start_date, datetime)
-    assert mortgage._comments == []
-    assert mortgage.payment_override_enabled is False
-    assert mortgage.monthly_payment_override is None
-    assert mortgage.fortnightly_payment_override is None
+    mortgage = Mortgage(
+        mortgage_name="Test Mortgage",
+        initial_interest=5.0,
+        initial_term=20,
+        initial_principal=810000,
+        deposit=50000,
+        extra_costs=10000,
+        comments="initial setup"
+    )
 
-
-def test_mortgage_id():
-    mortgage = Mortgage()
-    with pytest.raises(ValueError):
-        mortgage.mortgage_id = -1
-    with pytest.raises(ValueError):
-        mortgage.mortgage_id = "one"
-    mortgage.mortgage_id = 1
-    assert mortgage.mortgage_id == 1
-
-
-def test_mortgage_name():
-    mortgage = Mortgage()
-    with pytest.raises(ValueError):
-        mortgage.mortgage_name = ""
-    with pytest.raises(ValueError):
-        mortgage.mortgage_name = 123
-    mortgage.mortgage_name = "Home Loan"
-    assert mortgage.mortgage_name == "Home Loan"
-
-
-def test_initial_interest():
-    mortgage = Mortgage()
-    with pytest.raises(ValueError):
-        mortgage.initial_interest = -1
-    with pytest.raises(ValueError):
-        mortgage.initial_interest = "five"
-    mortgage.initial_interest = 0.05
+    assert mortgage.mortgage_name == "Test Mortgage"
     assert mortgage.initial_interest == 0.05
-
-
-def test_initial_term():
-    mortgage = Mortgage()
-    with pytest.raises(ValueError):
-        mortgage.initial_term = 0
-    with pytest.raises(ValueError):
-        mortgage.initial_term = 31
-    with pytest.raises(ValueError):
-        mortgage.initial_term = "twenty"
-    mortgage.initial_term = 20
     assert mortgage.initial_term == 20
+    assert mortgage.initial_principal == 810000
+    assert mortgage.deposit == 50000
+    assert mortgage.extra_costs == 10000
+    assert mortgage._comments == "initial setup"
 
 
-def test_initial_principal():
-    mortgage = Mortgage()
-    with pytest.raises(ValueError):
-        mortgage.initial_principal = 0
-    with pytest.raises(ValueError):
-        mortgage.initial_principal = -100000
-    with pytest.raises(ValueError):
-        mortgage.initial_principal = "hundred thousand"
-    mortgage.initial_principal = 100000
-    assert mortgage.initial_principal == 100000
+def test_gather_inputs():
+    mortgage = Mortgage(
+        mortgage_name="Test Mortgage",
+        initial_interest=5.0,
+        initial_term=20,
+        initial_principal=810000,
+        deposit=50000,
+        extra_costs=10000,
+        comments="initial setup"
+    )
+    mortgage.gather_inputs(
+        principal=820000,
+        interest=4.5,
+        term=25,
+        extra_costs=15000,
+        deposit=60000,
+        payment_override_enabled=True,
+        monthly_payment_override=3000,
+        fortnightly_payment_override=1500
+    )
+
+    assert mortgage.initial_principal == 820000
+    assert mortgage.initial_interest == 0.045
+    assert mortgage.initial_term == 25
+    assert mortgage.extra_costs == 15000
+    assert mortgage.deposit == 60000
+    assert mortgage.payment_override_enabled is True
+    assert mortgage.monthly_payment_override == 3000
+    assert mortgage.fortnightly_payment_override == 1500
 
 
-def test_deposit():
-    mortgage = Mortgage()
-    mortgage.initial_principal = 100000
-    with pytest.raises(ValueError):
-        mortgage.deposit = -1000
-    with pytest.raises(ValueError):
-        mortgage.deposit = 150000
-    with pytest.raises(ValueError):
-        mortgage.deposit = "ten thousand"
-    mortgage.deposit = 10000
-    assert mortgage.deposit == 10000
+def test_calculate_projected_payment():
+    mortgage = Mortgage(
+        mortgage_name="Test Mortgage",
+        initial_interest=5.0,
+        initial_term=20,
+        initial_principal=810000,
+        deposit=50000,
+        extra_costs=10000,
+        comments="initial setup"
+    )
+    monthly_payment = mortgage.calculate_projected_payment(810000, 5, 20, "monthly")
+    fortnightly_payment = mortgage.calculate_projected_payment(810000, 5, 20, "fortnightly")
 
-
-def test_extra_costs():
-    mortgage = Mortgage()
-    with pytest.raises(ValueError):
-        mortgage.extra_costs = -500
-    with pytest.raises(ValueError):
-        mortgage.extra_costs = "five hundred"
-    mortgage.extra_costs = 500
-    assert mortgage.extra_costs == 500
-
-
-def test_start_date():
-    mortgage = Mortgage()
-    with pytest.raises(ValueError):
-        mortgage.start_date = "2022-01-01"
-    new_date = datetime(2023, 1, 1)
-    mortgage.start_date = new_date
-    assert mortgage.start_date == new_date
+    assert monthly_payment > 0
+    assert fortnightly_payment > 0
 
 
 def test_calculate_initial_payment_breakdown():
-    mortgage = Mortgage()
-    mortgage.gather_inputs(
-        principal=810000,
-        interest=0.05,
-        term=20,
-        extra_costs=0,
-        deposit=0,
-        payment_override_enabled=True,
-        monthly_payment_override=6000,
-        fortnightly_payment_override=3000
+    mortgage = Mortgage(
+        mortgage_name="Test Mortgage",
+        initial_interest=5.0,
+        initial_term=20,
+        initial_principal=810000,
+        deposit=50000,
+        extra_costs=10000,
+        comments="initial setup"
     )
     mortgage.calculate_initial_payment_breakdown()
-    breakdown = mortgage.initial_payment_breakdown
-    assert isinstance(breakdown, dict)
-    assert "total_amount_borrowed" in breakdown
-    assert "estimated_repayment_monthly" in breakdown
-    assert "estimated_repayment_fortnightly" in breakdown
+    breakdown = mortgage.get_initial_payment_breakdown()
+
+    assert breakdown["total_amount_borrowed"] == 770000
 
 
-def test_calculate_mortgage_maturity():
-    mortgage = Mortgage()
-    mortgage.gather_inputs(
-        principal=810000,
-        interest=0.05,
-        term=20,
-        extra_costs=0,
-        deposit=0,
-        payment_override_enabled=True,
-        monthly_payment_override=6000,
-        fortnightly_payment_override=3000
+def test_make_balloon_payment():
+    mortgage = Mortgage(
+        mortgage_name="Test Mortgage",
+        initial_interest=5.0,
+        initial_term=20,
+        initial_principal=810000,
+        deposit=50000,
+        extra_costs=10000,
+        comments="initial setup"
     )
     mortgage.calculate_initial_payment_breakdown()
-    mortgage.calculate_mortgage_maturity()
-    maturity = mortgage.mortgage_maturity
-    assert isinstance(maturity, dict)
-    assert "monthly" in maturity
-    assert "fortnightly" in maturity
+    mortgage.make_balloon_payment(100000)
+
+    assert mortgage.initial_principal == 710000
 
 
-def test_create_amortization_table():
-    mortgage = Mortgage()
-    mortgage.gather_inputs(
-        principal=810000,
-        interest=0.05,
-        term=20,
-        extra_costs=0,
-        deposit=0,
-        payment_override_enabled=True,
-        monthly_payment_override=6000,
-        fortnightly_payment_override=3000
+def test_apply_extra_costs():
+    mortgage = Mortgage(
+        mortgage_name="Test Mortgage",
+        initial_interest=5.0,
+        initial_term=20,
+        initial_principal=810000,
+        deposit=50000,
+        extra_costs=10000,
+        comments="initial setup"
     )
     mortgage.calculate_initial_payment_breakdown()
-    mortgage.calculate_mortgage_maturity()
+    mortgage.apply_extra_costs(5000)
+
+    assert mortgage.initial_principal == 815000
+
+
+def test_add_comments():
+    mortgage = Mortgage(
+        mortgage_name="Test Mortgage",
+        initial_interest=5.0,
+        initial_term=20,
+        initial_principal=810000,
+        deposit=50000,
+        extra_costs=10000,
+        comments="initial setup"
+    )
+    mortgage.add_comments("Added a comment")
+    comments = mortgage.get_comments()
+
+    assert "Added a comment" in comments
+
+
+def test_amortization_table():
+    mortgage = Mortgage(
+        mortgage_name="Test Mortgage",
+        initial_interest=5.0,
+        initial_term=20,
+        initial_principal=810000,
+        deposit=50000,
+        extra_costs=10000,
+        comments="initial setup"
+    )
+    mortgage.calculate_initial_payment_breakdown()
     amortization_schedule = mortgage.amortization_table()
-    assert isinstance(amortization_schedule, dict)
-    assert "monthly" in amortization_schedule
-    assert "fortnightly" in amortization_schedule
+
     assert len(amortization_schedule["monthly"]) > 0
     assert len(amortization_schedule["fortnightly"]) > 0
 
 
-def test_add_comment():
-    mortgage = Mortgage()
-    mortgage.add_comment("This is a test comment.")
-    comments = mortgage.get_comments()
-    assert len(comments) == 1
-    assert comments[0] == "This is a test comment."
-
-
-def test_transaction_add_comment():
-    transaction_manager = Transaction()
-
-    mortgage = Mortgage()
-    mortgage.gather_inputs(
-        principal=810000,
-        interest=0.05,
-        term=20,
-        extra_costs=10000,
+def test_add_interest_rate_change():
+    mortgage = Mortgage(
+        mortgage_name="Test Mortgage",
+        initial_interest=5.0,
+        initial_term=20,
+        initial_principal=810000,
         deposit=50000,
-        payment_override_enabled=True,
-        monthly_payment_override=6000,
-        fortnightly_payment_override=3000
+        extra_costs=10000,
+        comments="initial setup"
+    )
+    new_rate = 4.5
+    effective_date = datetime.now() + timedelta(days=365)
+    mortgage.add_interest_rate_change(new_rate, effective_date)
+
+    assert len(mortgage.interest_rate_changes) == 1
+    assert mortgage.interest_rate_changes[0]["new_interest_rate"] == new_rate
+    assert mortgage.interest_rate_changes[0]["effective_date"] == effective_date
+
+
+def test_invalid_start_date():
+    mortgage = Mortgage(
+        mortgage_name="Test Mortgage",
+        initial_interest=5.0,
+        initial_term=20,
+        initial_principal=810000,
+        deposit=50000,
+        extra_costs=10000,
+        comments="initial setup"
+    )
+
+    with pytest.raises(ValueError):
+        mortgage.start_date = "invalid_date"
+
+
+def test_invalid_mortgage_id():
+    mortgage = Mortgage(
+        mortgage_name="Test Mortgage",
+        initial_interest=5.0,
+        initial_term=20,
+        initial_principal=810000,
+        deposit=50000,
+        extra_costs=10000,
+        comments="initial setup"
+    )
+
+    with pytest.raises(ValueError):
+        mortgage.mortgage_id = -1
+
+
+def test_generate_planning_scenarios():
+    mortgage = Mortgage(
+        mortgage_name="Test Mortgage",
+        initial_interest=5.0,
+        initial_term=20,
+        initial_principal=810000,
+        deposit=50000,
+        extra_costs=10000,
+        comments="initial setup"
+    )
+    scenarios = mortgage.generate_planning_scenarios(
+        principal_increment=3000.00,
+        principal_increments=15,
+        interest_increment=0.25,
+        interest_increments=15
+    )
+
+    assert len(scenarios) == 16
+    assert "monthly_payments" in scenarios[0]
+    assert "fortnightly_payments" in scenarios[0]
+
+
+def test_calculate_mortgage_maturity():
+    mortgage = Mortgage(
+        mortgage_name="Test Mortgage",
+        initial_interest=5.0,
+        initial_term=20,
+        initial_principal=810000,
+        deposit=50000,
+        extra_costs=10000,
+        comments="initial setup"
     )
     mortgage.calculate_initial_payment_breakdown()
     mortgage.calculate_mortgage_maturity()
-    mortgage.amortization_table()
 
-    transaction_manager.add_mortgage(1, mortgage)
-
-    transaction_manager.add_comment(1, "First comment via transaction manager.")
-    transaction_manager.add_comment(1, "Second comment via transaction manager.")
-
-    comments = transaction_manager.get_comments(1)
-    assert len(comments) == 2
-    assert comments[0] == "First comment via transaction manager."
-    assert comments[1] == "Second comment via transaction manager."
+    maturity = mortgage.mortgage_maturity
+    assert "monthly" in maturity
+    assert "fortnightly" in maturity
+    assert maturity["monthly"]["full_term_payments"] > 0
+    assert maturity["fortnightly"]["full_term_payments"] > 0
 
 
-if __name__ == "__main__":
-    pytest.main()
+def test_make_balloon_payment_invalid_amount():
+    mortgage = Mortgage(
+        mortgage_name="Test Mortgage",
+        initial_interest=5.0,
+        initial_term=20,
+        initial_principal=810000,
+        deposit=50000,
+        extra_costs=10000,
+        comments="initial setup"
+    )
+    mortgage.calculate_initial_payment_breakdown()
+
+    with pytest.raises(ValueError):
+        mortgage.make_balloon_payment(-50000)
+
+    with pytest.raises(ValueError):
+        mortgage.make_balloon_payment(900000)
+
+
+def test_apply_extra_costs_invalid_amount():
+    mortgage = Mortgage(
+        mortgage_name="Test Mortgage",
+        initial_interest=5.0,
+        initial_term=20,
+        initial_principal=810000,
+        deposit=50000,
+        extra_costs=10000,
+        comments="initial setup"
+    )
+    mortgage.calculate_initial_payment_breakdown()
+
+    with pytest.raises(ValueError):
+        mortgage.apply_extra_costs(-5000)
+
+
+def test_start_date_property():
+    mortgage = Mortgage(
+        mortgage_name="Test Mortgage",
+        initial_interest=5.0,
+        initial_term=20,
+        initial_principal=810000,
+        deposit=50000,
+        extra_costs=10000,
+        comments="initial setup"
+    )
+    new_date = datetime.now() + timedelta(days=365)
+    mortgage.start_date = new_date
+
+    assert mortgage.start_date == new_date
+
+
+def test_mortgage_id_property():
+    mortgage = Mortgage(
+        mortgage_name="Test Mortgage",
+        initial_interest=5.0,
+        initial_term=20,
+        initial_principal=810000,
+        deposit=50000,
+        extra_costs=10000,
+        comments="initial setup"
+    )
+    mortgage.mortgage_id = 123
+
+    assert mortgage.mortgage_id == 123

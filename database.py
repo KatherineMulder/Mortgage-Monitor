@@ -1,10 +1,12 @@
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+import logging
+import time
 
 
 def create_database():
     try:
-        #  default 'postgres' database
+
         default_conn = psycopg2.connect(
             dbname="postgres",
             user="postgres",
@@ -15,7 +17,7 @@ def create_database():
         default_conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         default_cursor = default_conn.cursor()
 
-        #  if mortgage_calculator database exists, create if not
+
         default_cursor.execute("SELECT 1 FROM pg_catalog.pg_database WHERE datname = 'mortgage_calculator'")
         database_exists = default_cursor.fetchone()
 
@@ -32,7 +34,7 @@ def create_database():
         return
 
     try:
-        # connect to the mortgage_calculator database
+
         conn = psycopg2.connect(
             dbname="mortgage_calculator",
             user="postgres",
@@ -72,8 +74,8 @@ def create_database():
             number_of_principal_increments INTEGER,
             interest_rate_increment_value NUMERIC(5, 2),
             number_of_interest_rate_increments INTEGER
-                   )
-               """)
+           )
+        """)
 
         # add missing columns if they do not exist
         alter_queries = [
@@ -99,19 +101,19 @@ def create_database():
         # transactions table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS transactions (
-            transaction_id SERIAL PRIMARY KEY,
-            mortgage_id INTEGER REFERENCES mortgages(mortgage_id),
-            transaction_date TIMESTAMP NOT NULL,
-            transaction_type VARCHAR(50),
-            current_principal NUMERIC,
-            interest_rate NUMERIC,
-            remaining_term_months INTEGER,
-            extra_payment NUMERIC,
-            updated_monthly_payment NUMERIC,
-            updated_fortnightly_payment NUMERIC,
-            amount NUMERIC,
-            description TEXT
-            )
+                transaction_id SERIAL PRIMARY KEY,
+                mortgage_id INTEGER REFERENCES mortgages(mortgage_id),
+                transaction_date TIMESTAMP NOT NULL,
+                transaction_type VARCHAR(50),
+                current_principal NUMERIC,
+                new_interest_rate NUMERIC,
+                remaining_term_months INTEGER,
+                extra_payment NUMERIC,
+                new_monthly_payment NUMERIC,
+                new_fortnightly_payment NUMERIC,
+                amount NUMERIC,
+                description TEXT
+           )
         """)
 
         # amortization_schedules table
@@ -144,25 +146,21 @@ def create_database():
     except Exception as e:
         print(f"Error setting up database tables: {e}")
 
+def initialize_database():
+    if not check_database_connection():
+        print("database not initialized. Creating database...")
+        create_database()
+        time.sleep(5)
+        if not check_database_connection():
+            print("database creation failed.")
+            return False
+        else:
+            print("database created successfully.")
+            return True
+    else:
+        print("database already initialized.")
+        return True
 
-"""
---  extra costs
-INSERT INTO transactions (mortgage_id, user_id, transaction_type, amount, description)
-VALUES (1, 1, 'Extra Costs', 5000.00, 'Added extra costs to principal');
-
---  a balloon payment
-INSERT INTO transactions (mortgage_id, user_id, transaction_type, amount, description)
-VALUES (1, 1, 'Balloon Payment', 10000.00, 'Made a balloon payment');
-
---  a monthly payment override
-INSERT INTO transactions (mortgage_id, user_id, transaction_type, amount, description)
-VALUES (1, 1, 'Monthly Payment Override', 200.00, 'Set monthly payment override');
-
--- fortnightly payment override
-INSERT INTO transactions (mortgage_id, user_id, transaction_type, amount, description)
-VALUES (1, 1, 'Fortnightly Payment Override', 100.00, 'Set fortnightly payment override');
-
-"""
 
 def check_database_connection():
     try:
@@ -179,5 +177,24 @@ def check_database_connection():
         return False
 
 
+def connect_to_database():
+    try:
+        conn = psycopg2.connect(
+            dbname="mortgage_calculator",
+            user="postgres",
+            password="admin123",
+            host="localhost",
+            port="5432"
+        )
+        conn.autocommit = True
+
+        logging.debug("Database connection established.")
+
+        return conn
+    except Exception as e:
+        logging.error(f"Failed to connect to the database: {str(e)}")
+        raise
+
+
 if __name__ == "__main__":
-    create_database()
+    initialize_database()

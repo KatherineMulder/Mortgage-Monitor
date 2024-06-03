@@ -17,7 +17,6 @@ app.config["SECRET_KEY"] = "secret key"
 logging.basicConfig(level=logging.DEBUG)
 
 
-
 @app.route("/", methods=["GET", "POST"])
 def root():
     return redirect(url_for("login"))
@@ -733,6 +732,155 @@ def export_projections(mortgage_id):
     except Exception as e:
         logging.error(f"Error exporting projections: {str(e)}")
         return "Internal Server Error", 500
+
+
+@app.route('/update_mortgage', methods=['GET', 'POST'])
+def update_mortgage_route():
+    if request.method == 'POST':
+        mortgage_id = request.form.get('mortgage_id')
+        new_interest_rate = request.form.get('new_interest_rate')
+        monthly_payment_override = request.form.get('monthly_payment_override')
+        extra_costs = request.form.get('extra_costs')
+        balloon_payment = request.form.get('balloon_payment')
+        comments = request.form.get('comments')
+
+        if not mortgage_id:
+            flash('Mortgage ID is missing!', 'error')
+            return redirect(url_for('index'))
+
+        conn = database.connect_to_database()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM mortgages WHERE mortgage_id = %s", (mortgage_id,))
+        mortgage_data = cursor.fetchone()
+
+        if mortgage_data:
+            mortgage = Mortgage(
+                mortgage_name=mortgage_data[2],
+                initial_interest=mortgage_data[4],
+                initial_term=mortgage_data[5],
+                initial_principal=mortgage_data[3],
+                deposit=mortgage_data[8],
+                extra_costs=mortgage_data[6]
+            )
+
+            # Update the mortgage
+            update_mortgage(
+                mortgage,
+                new_interest_rate=float(new_interest_rate) if new_interest_rate else None,
+                monthly_payment_override=float(monthly_payment_override) if monthly_payment_override else None,
+                extra_costs=float(extra_costs) if extra_costs else None,
+                balloon_payment=float(balloon_payment) if balloon_payment else None,
+                comments=comments
+            )
+
+            # Save the updated mortgage back to the database
+            cursor.execute("""
+                UPDATE mortgages
+                SET principal = %s, interest = %s, extra_costs = %s, payment_override_enabled = %s,
+                    monthly_payment_override = %s, comments = %s
+                WHERE mortgage_id = %s
+            """, (
+                mortgage.initial_principal,
+                mortgage.initial_interest,
+                mortgage.extra_costs,
+                mortgage.payment_override_enabled,
+                mortgage.monthly_payment_override,
+                mortgage._comments,
+                mortgage_id
+            ))
+            conn.commit()
+
+            # Log the transaction
+            cursor.execute("""
+                INSERT INTO transactions (
+                    mortgage_id, transaction_date, transaction_type, amount, current_principal, 
+                    new_interest_rate, new_monthly_payment, new_fortnightly_payment, 
+                    description
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                mortgage_id, datetime.utcnow(), 'Update', None, mortgage.initial_principal,
+                mortgage.initial_interest, mortgage.initial_payment_breakdown.get("total_repayment_monthly"),
+                mortgage.initial_payment_breakdown.get("total_repayment_fortnightly"),
+                "Updated mortgage details: " + (comments or "")
+            ))
+            conn.commit()
+
+            flash('Mortgage updated successfully!', 'success')
+        else:
+            flash('Mortgage not found!', 'error')
+
+        cursor.close()
+        conn.close()
+        return redirect(url_for('index'))
+
+    elif request.method == 'GET':
+        mortgage_id = request.args.get('mortgage_id')
+
+        if mortgage_id:
+            conn = database.connect_to_database()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM mortgages WHERE mortgage_id = %s", (mortgage_id,))
+            mortgage_data = cursor.fetchone()
+            cursor.close()
+            conn.close()
+
+            if mortgage_data:
+                mortgage = {
+                    "mortgage_id": mortgage_data[0],
+                    "mortgage_name": mortgage_data[2],
+                    "initial_principal": mortgage_data[3],
+                    "initial_interest": mortgage_data[4],
+                    "initial_term": mortgage_data[5],
+                    "extra_costs": mortgage_data[6],
+                    "deposit": mortgage_data[8],
+                    "monthly_payment_override": mortgage_data[10],
+                    "fortnightly_payment_override": mortgage_data[11],
+                    "start_date": mortgage_data[12],
+                    "comments": mortgage_data[13]
+                }
+                return render_template('update_mortgage.html', mortgage=mortgage)
+            else:
+                flash('Mortgage not found!', 'error')
+                return redirect(url_for('index'))
+
+        flash('Mortgage ID is missing!', 'error')
+        return redirect(url_for('index'))
+
+
+
+@app.route('/transaction', methods=('GET', 'POST'))
+def add_transaction():
+    if request.method == 'POST':
+        mortgage_id = request.form['mortgage_id']
+        transaction_type = request.form['transaction_type']
+        amount = request.form['amount']
+        current_principal = request.form['current_principal']
+        new_interest_rate = request.form.get('new_interest_rate')
+        new_monthly_payment = request.form.get('new_monthly_payment')
+        new_fortnightly_payment = request.form.get('new_fortnightly_payment')
+        remaining_term_months = request.form.get('remaining_term_months')
+        extra_payment = request.form.get('extra_payment')
+        description = request.form.get('description')
+
+        conn = database.connect_to_database()
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO transactions (
+                mortgage_id, transaction_date, transaction_type, amount, current_principal, 
+                new_interest_rate, new_monthly_payment, new_fortnightly_payment, 
+                remaining_term_months, extra_payment, description
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            mortgage_id, datetime.utcnow(), transaction_type, amount, current_principal,
+            new_interest_rate, new_monthly_payment, new_fortnightly_payment,
+            remaining_term_months, extra_payment, description
+        ))
+        cursor.close()
+        conn.close()
+        flash('Transaction added successfully!')
+        return redirect(url_for('index'))
+
+    return render_template('transaction.html')
 
 
 if __name__ == "__main__":

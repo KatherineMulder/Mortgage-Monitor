@@ -8,6 +8,7 @@ class Mortgage:
                  payment_override_enabled: bool = False,
                  monthly_payment_override: Optional[float] = None, fortnightly_payment_override: Optional[float] = None,
                  start_date: Optional[datetime] = None, created_at: Optional[datetime] = None):
+
         self._mortgage_id: Optional[int] = None
         self._mortgage_name: str = mortgage_name
         self._initial_interest: float = initial_interest / 100
@@ -69,10 +70,10 @@ class Mortgage:
     @initial_interest.setter
     def initial_interest(self, value: float) -> None:
         if value is None or not isinstance(value, (float, int)):
-            raise ValueError("Initial interest must be a numeric value")
+            raise ValueError("initial interest must be a numeric value")
         if value < 0:
-            raise ValueError("Initial interest cannot be negative")
-        self._initial_interest = float(value)
+            raise ValueError("initial interest cannot be negative")
+        self._initial_interest = float(value) / 100
 
     @property
     def initial_term(self) -> int:
@@ -81,11 +82,11 @@ class Mortgage:
     @initial_term.setter
     def initial_term(self, value: int) -> None:
         if value is None or not isinstance(value, int):
-            raise ValueError("Initial term must be an integer")
+            raise ValueError("initial term must be an integer")
         if value <= 0:
-            raise ValueError("Initial term must be greater than zero")
+            raise ValueError("initial term must be greater than zero")
         if value > 30:
-            raise ValueError("Maximum initial term is 30 years")
+            raise ValueError("maximum term is 30 years")
         self._initial_term = value
 
     @property

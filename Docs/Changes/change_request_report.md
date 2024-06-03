@@ -34,5 +34,4 @@ The focus of this change request is to update the appearance and layout of our w
 - **User Guidance:** Users may need guidance to navigate the new layout initially.
 - **Feedback Process:** Establishing a feedback mechanism post-implementation to gather user input and address any issues.
 
-## Attachments
-![change_index.png](change_index.png)
+
