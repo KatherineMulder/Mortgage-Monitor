@@ -1,7 +1,6 @@
 import psycopg2
 from datetime import datetime
 
-
 DATABASE_URI = {
     'dbname': 'mortgage_calculator',
     'user': 'postgres',
@@ -15,7 +14,6 @@ def log_transaction(mortgage_id, transaction_type, amount, current_principal, ne
                     new_monthly_payment=None, new_fortnightly_payment=None, remaining_term_months=None,
                     extra_payment=None, description=None):
     try:
-
         conn = psycopg2.connect(**DATABASE_URI)
         cursor = conn.cursor()
 
@@ -42,7 +40,6 @@ def log_transaction(mortgage_id, transaction_type, amount, current_principal, ne
 
 
 if __name__ == "__main__":
-
     log_transaction(
         mortgage_id=1,
         transaction_type="Update",

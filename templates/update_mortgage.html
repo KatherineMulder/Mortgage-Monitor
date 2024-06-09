@@ -23,31 +23,26 @@
             </div>
         </div>
     </nav>
-       <div class="container">
-        <h1>Update Mortgage</h1>
-        <form method="post" action="{{ url_for('update_mortgage_route') }}">
-            <input type="hidden" name="mortgage_id" value="{{ mortgage.mortgage_id }}">
-            <div class="mb-3">
-                <label for="new_interest_rate" class="form-label">New Interest Rate</label>
-                <input type="text" class="form-control" id="new_interest_rate" name="new_interest_rate" value="{{ mortgage.initial_interest * 100 }}">
-            </div>
+    <div class="container fs-3">
+        <h1 class="p-3 text-center">Update Mortgage</h1>
+        <form method="post" action="{{ url_for('update_mortgage', mortgage_id=mortgage._mortgage_id) }}">
             <div class="mb-3">
                 <label for="monthly_payment_override" class="form-label">Monthly Payment Override</label>
-                <input type="text" class="form-control" id="monthly_payment_override" name="monthly_payment_override" value="{{ mortgage.monthly_payment_override }}">
+                <input type="number" step="0.01" class="form-control fs-3" id="monthly_payment_override" name="monthly_payment_override" value="{{ mortgage.monthly_payment_override }}">
             </div>
             <div class="mb-3">
                 <label for="extra_costs" class="form-label">Extra Costs</label>
-                <input type="text" class="form-control" id="extra_costs" name="extra_costs">
+                <input type="number" step="0.01" class="form-control fs-3" id="extra_costs" name="extra_costs">
             </div>
             <div class="mb-3">
                 <label for="balloon_payment" class="form-label">Balloon Payment</label>
-                <input type="text" class="form-control" id="balloon_payment" name="balloon_payment">
+                <input type="number" step="0.01" class="form-control fs-3" id="balloon_payment" name="balloon_payment">
             </div>
             <div class="mb-3">
                 <label for="comments" class="form-label">Comments</label>
-                <textarea class="form-control" id="comments" name="comments" rows="3">{{ mortgage.comments }}</textarea>
+                <textarea class="form-control" id="comments" name="comments" rows="3">{{ mortgage._comments }}</textarea>
             </div>
-            <button type="submit" class="btn btn-primary">Update Mortgage</button>
+            <button type="submit" class="btn btn-primary  btn-lg ">Update Mortgage</button>
         </form>
     </div>
     <script>
@@ -107,7 +102,6 @@
                 fortnightlyOverrideField.value = "";
             }
         }
-
 
         window.onload = function() {
             var checkbox = document.getElementById("payment_override_enabled");

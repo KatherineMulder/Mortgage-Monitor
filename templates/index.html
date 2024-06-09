@@ -72,8 +72,10 @@
                     <div class="card-body">
                         <h4 class="text-center">Mortgage Name:<br><span class="card-title fs-2 text-center pt-4 fw-light">{{ mortgage.mortgage_name }}</span></h4>
                         <div class="row">
+
                             <div class="mt-3 d-flex justify-content-end">
                                 <div>
+                                    <a href="{{ url_for('view_mortgage', mortgage_id=mortgage.mortgage_id) }}" class="btn btn-primary btn-lg btn-block">View Updated Mortgage</a>
                                     <a href="{{ url_for('update_mortgage', mortgage_id=mortgage.mortgage_id) }}" class="btn btn-primary btn-lg btn-block">Update Mortgage</a>
                                 </div>
                                 <div class="ml-2">
@@ -173,7 +175,7 @@
                                         <thead class="table-dark">
                                             <tr>
                                                 <th>Fortnightly Breakdown</th>
-                                                <th>Value</h>
+                                                <th>Value</th>
                                             </tr>
                                         </thead>
                                         <tbody>

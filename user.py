@@ -4,6 +4,7 @@ import re
 
 logging.basicConfig(level=logging.DEBUG)
 
+
 class UserManager:
     def __init__(self):
         self.conn = self.connect_to_database()
